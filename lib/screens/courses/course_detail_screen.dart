@@ -7,7 +7,9 @@ import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
+import '../../widgets/absence_meter.dart';
 import '../../widgets/form_bits.dart';
+import '../attendance/attendance_screen.dart';
 import 'add_course_screen.dart';
 import 'add_grade_screen.dart';
 
@@ -84,6 +86,8 @@ class CourseDetailScreen extends StatelessWidget {
           Text(course.title, style: AppTheme.display(30)),
           const SizedBox(height: 16),
           _TotalCard(course: course),
+          const SizedBox(height: 12),
+          _AttendanceTile(course: course),
           const SizedBox(height: 16),
           const Text(
             'My grades',
@@ -170,6 +174,71 @@ class _TotalCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AttendanceTile extends StatelessWidget {
+  const _AttendanceTile({required this.course});
+
+  final Course course;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = AbsenceStatus.of(course);
+    return Material(
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: status.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          context.read<CourseState>().term = course.term;
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AttendanceScreen()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Attendance · ${course.absenceCount} of '
+                            '${Course.maxAbsences} absences',
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        Text(
+                          status.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: status.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    AbsenceDots(course: course),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.subtle),
+            ],
+          ),
+        ),
       ),
     );
   }

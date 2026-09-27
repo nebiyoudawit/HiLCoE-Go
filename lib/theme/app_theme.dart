@@ -98,8 +98,7 @@ class AppTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.blue,
         foregroundColor: Colors.white,
-        extendedTextStyle:
-            TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        extendedTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         shape: StadiumBorder(),
       ),
       navigationBarTheme: NavigationBarThemeData(

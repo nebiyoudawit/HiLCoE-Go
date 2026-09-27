@@ -47,12 +47,11 @@ class CourseState extends ChangeNotifier {
 
   bool codeTaken(Term term, String code, {String? exceptId}) {
     final normalized = Course.normalizeCode(code);
-    return _courses.any(
-        (c) => c.term == term && c.code == normalized && c.id != exceptId);
+    return _courses
+        .any((c) => c.term == term && c.code == normalized && c.id != exceptId);
   }
 
-  Future<void> add(Course course) =>
-      _commit([..._courses, course]);
+  Future<void> add(Course course) => _commit([..._courses, course]);
 
   Future<void> update(Course course) =>
       _commit([for (final c in _courses) c.id == course.id ? course : c]);
@@ -75,6 +74,33 @@ class CourseState extends ChangeNotifier {
     return update(course.copyWith(
       grades: course.grades.where((g) => g.id != gradeId).toList(),
     ));
+  }
+
+  /// Logs a missed class, dated today unless [date] is given.
+  Future<void> addAbsence(String courseId, [DateTime? date]) {
+    final course = byId(courseId);
+    if (course == null) return Future.value();
+    return update(course.copyWith(
+      absences: [...course.absences, date ?? DateTime.now()],
+    ));
+  }
+
+  /// Undoes the most recently logged absence.
+  Future<void> removeLastAbsence(String courseId) {
+    final course = byId(courseId);
+    if (course == null || course.absences.isEmpty) return Future.value();
+    return update(course.copyWith(
+      absences: course.absences.sublist(0, course.absences.length - 1),
+    ));
+  }
+
+  /// The course with the most absences this [term], or null if none missed.
+  Course? mostMissed(Term term) {
+    Course? top;
+    for (final c in coursesFor(term)) {
+      if (c.absenceCount > (top?.absenceCount ?? 0)) top = c;
+    }
+    return top;
   }
 
   Future<void> remove(String id) =>

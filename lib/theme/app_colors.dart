@@ -27,5 +27,10 @@ class AppColors {
   static const onBlueMuted = Color(0xFFD4E0FD);
 
   static const warning = Color(0xFFD97706);
+  static const warningText = Color(0xFF92400E);
+  static const warningBorder = Color(0xFFFCD34D);
+  static const danger = Color(0xFFDC2626);
+  static const dangerText = Color(0xFF991B1B);
+  static const dangerBorder = Color(0xFFFCA5A5);
   static const error = Color(0xFFB91C1C);
 }

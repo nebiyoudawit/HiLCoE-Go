@@ -15,6 +15,6 @@ class CourseRepository {
     return [for (final c in raw) Course.fromJson(c as Map<String, dynamic>)];
   }
 
-  Future<void> save(String email, List<Course> courses) => _store.writeJson(
-      _key(email), courses.map((c) => c.toJson()).toList());
+  Future<void> save(String email, List<Course> courses) =>
+      _store.writeJson(_key(email), courses.map((c) => c.toJson()).toList());
 }

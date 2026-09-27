@@ -9,7 +9,11 @@ class Course {
     required this.title,
     required this.creditHours,
     this.grades = const [],
+    this.absences = const [],
   });
+
+  /// Most classes a student may miss in one course per term.
+  static const maxAbsences = 5;
 
   final String id;
   final Term term;
@@ -17,6 +21,14 @@ class Course {
   final String title;
   final int creditHours;
   final List<Grade> grades;
+
+  /// The day of each class missed, in the order they were logged.
+  final List<DateTime> absences;
+
+  int get absenceCount => absences.length;
+
+  /// Absences still allowed; negative once over the limit.
+  int get absencesLeft => maxAbsences - absenceCount;
 
   /// Running total of marks earned so far.
   double get earned => grades.fold(0, (sum, g) => sum + g.score);
@@ -55,6 +67,7 @@ class Course {
     String? title,
     int? creditHours,
     List<Grade>? grades,
+    List<DateTime>? absences,
   }) {
     return Course(
       id: id,
@@ -63,6 +76,7 @@ class Course {
       title: title ?? this.title,
       creditHours: creditHours ?? this.creditHours,
       grades: grades ?? this.grades,
+      absences: absences ?? this.absences,
     );
   }
 
@@ -73,6 +87,7 @@ class Course {
         'title': title,
         'creditHours': creditHours,
         'grades': grades.map((g) => g.toJson()).toList(),
+        'absences': absences.map((d) => d.toIso8601String()).toList(),
       };
 
   factory Course.fromJson(Map<String, dynamic> json) => Course(
@@ -84,6 +99,10 @@ class Course {
         grades: [
           for (final g in (json['grades'] as List? ?? const []))
             Grade.fromJson(g as Map<String, dynamic>),
+        ],
+        absences: [
+          for (final d in (json['absences'] as List? ?? const []))
+            DateTime.parse(d as String),
         ],
       );
 

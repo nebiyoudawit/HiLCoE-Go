@@ -14,8 +14,18 @@ void main() {
         title: 'Data Structures',
         creditHours: 4,
         grades: [
-          Grade(id: 'g1', type: GradeType.quiz, label: 'Quiz 1', score: 4, outOf: 5),
-          Grade(id: 'g2', type: GradeType.midExam, label: 'Mid', score: 16, outOf: 20),
+          Grade(
+              id: 'g1',
+              type: GradeType.quiz,
+              label: 'Quiz 1',
+              score: 4,
+              outOf: 5),
+          Grade(
+              id: 'g2',
+              type: GradeType.midExam,
+              label: 'Mid',
+              score: 16,
+              outOf: 20),
         ],
       );
       expect(course.earned, 20);
@@ -45,9 +55,25 @@ void main() {
         title: 'Data Structures',
         creditHours: 4,
         grades: [
-          const Grade(id: 'm', type: GradeType.midExam, label: 'Mid exam', score: 16, outOf: 20),
-          Grade(id: 'q1', type: GradeType.quiz, label: 'Quiz 1', score: 4, outOf: 5, date: DateTime(2026, 10, 5)),
-          const Grade(id: 'q2', type: GradeType.quiz, label: 'Quiz 2', score: 3, outOf: 5),
+          const Grade(
+              id: 'm',
+              type: GradeType.midExam,
+              label: 'Mid exam',
+              score: 16,
+              outOf: 20),
+          Grade(
+              id: 'q1',
+              type: GradeType.quiz,
+              label: 'Quiz 1',
+              score: 4,
+              outOf: 5,
+              date: DateTime(2026, 10, 5)),
+          const Grade(
+              id: 'q2',
+              type: GradeType.quiz,
+              label: 'Quiz 2',
+              score: 3,
+              outOf: 5),
         ],
       );
       expect(course.sortedGrades.map((g) => g.id), ['q1', 'q2', 'm']);
@@ -56,6 +82,24 @@ void main() {
       final copy = Course.fromJson(course.toJson());
       expect(copy.grades[1].date, DateTime(2026, 10, 5));
       expect(copy.grades[0].date, isNull);
+    });
+
+    test('counts absences against the limit of 5', () {
+      final course = Course(
+        id: 'c1',
+        term: Term.aut,
+        code: 'CS 221',
+        title: 'Computer Organization',
+        creditHours: 3,
+        absences: [for (var d = 1; d <= 6; d++) DateTime(2026, 10, d)],
+      );
+      expect(course.absenceCount, 6);
+      expect(course.absencesLeft, -1);
+      final copy = Course.fromJson(course.toJson());
+      expect(copy.absences.last, DateTime(2026, 10, 6));
+      // Courses saved before attendance existed still load.
+      final old = course.toJson()..remove('absences');
+      expect(Course.fromJson(old).absences, isEmpty);
     });
 
     test('normalizes course codes', () {

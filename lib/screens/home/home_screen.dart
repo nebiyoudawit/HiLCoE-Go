@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_user.dart';
+import '../../models/course.dart';
+import '../../widgets/absence_meter.dart';
+import '../attendance/attendance_screen.dart';
 import '../../state/auth_state.dart';
 import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
@@ -58,6 +61,8 @@ class HomeScreen extends StatelessWidget {
             creditHours: state.creditHoursFor(term),
             onTap: onOpenCourses,
           ),
+          const SizedBox(height: 12),
+          _AttendanceCard(course: state.mostMissed(term)),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -75,7 +80,8 @@ class HomeScreen extends StatelessWidget {
             const Text(
               'Nothing here yet. Add the courses you registered for from the '
               'Courses tab.',
-              style: TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
+              style:
+                  TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
             )
           else
             DecoratedBox(
@@ -164,6 +170,81 @@ class _TermCard extends StatelessWidget {
                 '$creditHours credit hours',
                 style: const TextStyle(fontSize: 15, color: Color(0xFFE6EDFE)),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Most absences" tile that opens the attendance screen.
+class _AttendanceCard extends StatelessWidget {
+  const _AttendanceCard({required this.course});
+
+  /// Null when nothing has been missed this term.
+  final Course? course;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = course;
+    return Material(
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const AttendanceScreen()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      c == null ? 'ATTENDANCE' : 'MOST ABSENCES',
+                      style: AppTheme.eyebrow(color: AppColors.navy),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      c == null
+                          ? 'No classes missed'
+                          : '${c.code} · ${AbsenceStatus.of(c).label}',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    if (c != null) ...[
+                      const SizedBox(height: 8),
+                      AbsenceDots(course: c),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              if (c != null)
+                Text.rich(
+                  TextSpan(
+                    text: '${c.absenceCount}',
+                    children: [
+                      const TextSpan(
+                        text: ' of ${Course.maxAbsences}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  style: AppTheme.display(26),
+                ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.subtle),
             ],
           ),
         ),
