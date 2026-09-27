@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/class_slot.dart';
 import '../../models/course.dart';
 import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
@@ -96,6 +97,158 @@ class NextExamTile extends StatelessWidget {
           style: _detail,
         ),
       ],
+    );
+  }
+}
+
+/// Today's periods with the class in each, highlighting the one running
+/// now. Classes already over are struck through.
+class TodayClasses extends StatelessWidget {
+  const TodayClasses({super.key, required this.onOpenSchedule});
+
+  final VoidCallback onOpenSchedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<CourseState>();
+    final now = DateTime.now();
+    final minute = now.hour * 60 + now.minute;
+    final periods = Period.on(now.weekday);
+    final classes = state.classesOn(state.term, now.weekday);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Today\'s classes',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+            ),
+            TextButton(
+              onPressed: onOpenSchedule,
+              child: const Text('Full week'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        if (periods.isEmpty)
+          const Text('No classes on Sundays.', style: _detail)
+        else if (classes.isEmpty)
+          const Text(
+            'Nothing scheduled today. Fill in your timetable from the '
+            'Schedule tab.',
+            style:
+                TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
+          )
+        else
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Column(
+                children: [
+                  for (var i = 0; i < periods.length; i++) ...[
+                    if (i > 0) const Divider(),
+                    _TodayRow(
+                      period: periods[i],
+                      slot: classes[i],
+                      now: minute,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _TodayRow extends StatelessWidget {
+  const _TodayRow({
+    required this.period,
+    required this.slot,
+    required this.now,
+  });
+
+  final Period period;
+  final ClassSlot? slot;
+
+  /// Minutes after midnight right now.
+  final int now;
+
+  @override
+  Widget build(BuildContext context) {
+    final course =
+        slot == null ? null : context.read<CourseState>().byId(slot!.courseId);
+    final current = now >= period.startMinutes && now < period.endMinutes;
+    final over = now >= period.endMinutes;
+    final color = current
+        ? AppColors.blue
+        : over
+            ? AppColors.subtle
+            : AppColors.muted;
+
+    return Container(
+      color: current ? AppColors.tint : null,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 44,
+            child: Text(
+              clockTime(period.startMinutes),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: current ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: course == null
+                ? const Text(
+                    'Free period',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.subtle,
+                    ),
+                  )
+                : Text(
+                    '${course.code} ${course.title}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: current ? FontWeight.w600 : FontWeight.w400,
+                      color: over ? AppColors.subtle : AppColors.ink,
+                      decoration: over ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+          ),
+          if (slot?.room != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              slot!.room!,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: current ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

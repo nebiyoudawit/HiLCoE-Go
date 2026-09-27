@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/course_repository.dart';
+import '../models/class_slot.dart';
 import '../models/course.dart';
 import '../models/exam.dart';
 import '../models/grade.dart';
@@ -13,6 +14,7 @@ class CourseState extends ChangeNotifier {
   String? _email;
   List<Course> _courses = const [];
   List<Exam> _exams = const [];
+  List<ClassSlot> _slots = const [];
   Term _term;
 
   /// The term the Courses tab is showing.
@@ -33,6 +35,7 @@ class CourseState extends ChangeNotifier {
     _email = email;
     _courses = email == null ? const [] : _repo.load(email);
     _exams = email == null ? const [] : _repo.loadExams(email);
+    _slots = email == null ? const [] : _repo.loadSchedule(email);
   }
 
   List<Course> coursesFor(Term term) =>
@@ -106,10 +109,13 @@ class CourseState extends ChangeNotifier {
     return top;
   }
 
-  /// Deletes a course along with its exams.
+  /// Deletes a course along with its exams and class times.
   Future<void> remove(String id) async {
     if (_exams.any((e) => e.courseId == id)) {
       await _commitExams(_exams.where((e) => e.courseId != id).toList());
+    }
+    if (_slots.any((s) => s.courseId == id)) {
+      await _commitSlots(_slots.where((s) => s.courseId != id).toList());
     }
     await _commit(_courses.where((c) => c.id != id).toList());
   }
@@ -148,6 +154,38 @@ class CourseState extends ChangeNotifier {
 
   Future<void> removeExam(String id) =>
       _commitExams(_exams.where((e) => e.id != id).toList());
+
+  /// This [term]'s classes on [weekday], keyed by period index.
+  Map<int, ClassSlot> classesOn(Term term, int weekday) {
+    final ids = {for (final c in coursesFor(term)) c.id};
+    return {
+      for (final s in _slots)
+        if (s.weekday == weekday && ids.contains(s.courseId)) s.period: s,
+    };
+  }
+
+  /// Puts [slot] in its period, replacing whatever this term had there.
+  Future<void> saveClass(ClassSlot slot) {
+    final course = byId(slot.courseId);
+    if (course == null) return Future.value();
+    final taken = classesOn(course.term, slot.weekday)[slot.period];
+    return _commitSlots([
+      for (final s in _slots)
+        if (s.id != slot.id && s.id != taken?.id) s,
+      slot,
+    ]);
+  }
+
+  Future<void> removeClass(String id) =>
+      _commitSlots(_slots.where((s) => s.id != id).toList());
+
+  Future<void> _commitSlots(List<ClassSlot> next) async {
+    final email = _email;
+    if (email == null) return;
+    _slots = next;
+    notifyListeners();
+    await _repo.saveSchedule(email, next);
+  }
 
   Future<void> _commitExams(List<Exam> next) async {
     final email = _email;

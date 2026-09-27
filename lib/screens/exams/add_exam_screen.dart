@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/class_slot.dart';
 import '../../models/exam.dart';
 import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
@@ -12,9 +13,8 @@ import '../../widgets/form_bits.dart';
 import '../../widgets/pill_segments.dart';
 import '../../widgets/select_chip.dart';
 
-/// Start times of HiLCoE's class periods, in minutes after midnight:
-/// 8:00, 9:45, 11:30, 14:00 and 15:45.
-const periodStarts = [480, 585, 690, 840, 945];
+/// Exams usually start when a class period does.
+final periodStarts = [for (final p in Period.all) p.startMinutes];
 
 /// Adds an exam for one of this term's courses, or edits [existing].
 class AddExamScreen extends StatefulWidget {

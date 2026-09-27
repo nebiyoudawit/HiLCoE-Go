@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hilcoe_go/models/class_slot.dart';
 import 'package:hilcoe_go/models/course.dart';
 import 'package:hilcoe_go/models/exam.dart';
 import 'package:hilcoe_go/util/format.dart';
@@ -125,6 +126,16 @@ void main() {
     final copy = Exam.fromJson(exam.toJson());
     expect(copy.type, ExamType.mid);
     expect(copy.room, '401');
+  });
+
+  test('periods: five on weekdays, three on Saturday, none on Sunday', () {
+    expect(Period.on(DateTime.monday).length, 5);
+    expect(Period.on(DateTime.saturday).last.endMinutes, 780); // 13:00
+    expect(Period.on(DateTime.sunday), isEmpty);
+    const slot = ClassSlot(
+        id: 's1', courseId: 'c1', weekday: 1, period: 3, room: 'LAB 201');
+    expect(slot.isLab, isTrue);
+    expect(ClassSlot.fromJson(slot.toJson()).period, 3);
   });
 
   group('Terms', () {

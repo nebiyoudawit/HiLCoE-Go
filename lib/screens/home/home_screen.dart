@@ -7,7 +7,6 @@ import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
-import '../courses/course_detail_screen.dart';
 import 'home_tiles.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,10 +14,12 @@ class HomeScreen extends StatelessWidget {
     super.key,
     required this.onOpenCourses,
     required this.onOpenExams,
+    required this.onOpenSchedule,
   });
 
   final VoidCallback onOpenCourses;
   final VoidCallback onOpenExams;
+  final VoidCallback onOpenSchedule;
 
   @override
   Widget build(BuildContext context) {
@@ -76,66 +77,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'This term\'s courses',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                ),
-              ),
-              TextButton(onPressed: onOpenCourses, child: const Text('All')),
-            ],
-          ),
-          const SizedBox(height: 4),
-          if (courses.isEmpty)
-            const Text(
-              'Nothing here yet. Add the courses you registered for from the '
-              'Courses tab.',
-              style:
-                  TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
-            )
-          else
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  for (var i = 0; i < courses.length; i++) ...[
-                    if (i > 0) const Divider(),
-                    ListTile(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) =>
-                              CourseDetailScreen(courseId: courses[i].id),
-                        ),
-                      ),
-                      title: Text(
-                        courses[i].title,
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                      leading: SizedBox(
-                        width: 76,
-                        child: Text(
-                          courses[i].code,
-                          style: AppTheme.eyebrow(),
-                        ),
-                      ),
-                      minLeadingWidth: 76,
-                      trailing: Text(
-                        '${courses[i].creditHours} cr',
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.muted),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          TodayClasses(onOpenSchedule: onOpenSchedule),
         ],
       ),
     );

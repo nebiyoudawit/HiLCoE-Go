@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../courses/courses_screen.dart';
 import '../exams/exams_screen.dart';
-import 'coming_soon_screen.dart';
+import '../schedule/schedule_screen.dart';
 import 'home_screen.dart';
 
 /// Signed-in layout: four tabs with the bottom navigation bar.
@@ -27,14 +27,10 @@ class _HomeShellState extends State<HomeShell> {
           HomeScreen(
             onOpenCourses: () => _go(1),
             onOpenExams: () => _go(3),
+            onOpenSchedule: () => _go(2),
           ),
           const CoursesScreen(),
-          const ComingSoonScreen(
-            title: 'Schedule',
-            icon: Icons.calendar_month_outlined,
-            message: 'Your weekly timetable, imported from the university '
-                'PDF or entered by hand, is coming next.',
-          ),
+          const ScheduleScreen(),
           const ExamsScreen(),
         ],
       ),
