@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/course_repository.dart';
 import '../models/course.dart';
+import '../models/grade.dart';
 import '../models/term.dart';
 
 class CourseState extends ChangeNotifier {
@@ -55,6 +56,26 @@ class CourseState extends ChangeNotifier {
 
   Future<void> update(Course course) =>
       _commit([for (final c in _courses) c.id == course.id ? course : c]);
+
+  /// Adds [grade] to the course, or replaces the grade with the same id.
+  Future<void> saveGrade(String courseId, Grade grade) {
+    final course = byId(courseId);
+    if (course == null) return Future.value();
+    final exists = course.grades.any((g) => g.id == grade.id);
+    return update(course.copyWith(
+      grades: exists
+          ? [for (final g in course.grades) g.id == grade.id ? grade : g]
+          : [...course.grades, grade],
+    ));
+  }
+
+  Future<void> removeGrade(String courseId, String gradeId) {
+    final course = byId(courseId);
+    if (course == null) return Future.value();
+    return update(course.copyWith(
+      grades: course.grades.where((g) => g.id != gradeId).toList(),
+    ));
+  }
 
   Future<void> remove(String id) =>
       _commit(_courses.where((c) => c.id != id).toList());

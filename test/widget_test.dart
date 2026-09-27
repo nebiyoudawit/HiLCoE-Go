@@ -37,6 +37,27 @@ void main() {
       expect(copy.grades, isEmpty);
     });
 
+    test('orders grades by type and suggests the next name', () {
+      final course = Course(
+        id: 'c1',
+        term: Term.aut,
+        code: 'CS 201',
+        title: 'Data Structures',
+        creditHours: 4,
+        grades: [
+          const Grade(id: 'm', type: GradeType.midExam, label: 'Mid exam', score: 16, outOf: 20),
+          Grade(id: 'q1', type: GradeType.quiz, label: 'Quiz 1', score: 4, outOf: 5, date: DateTime(2026, 10, 5)),
+          const Grade(id: 'q2', type: GradeType.quiz, label: 'Quiz 2', score: 3, outOf: 5),
+        ],
+      );
+      expect(course.sortedGrades.map((g) => g.id), ['q1', 'q2', 'm']);
+      expect(course.nextLabelFor(GradeType.quiz), 'Quiz 3');
+      expect(course.nextLabelFor(GradeType.finalExam), 'Final exam');
+      final copy = Course.fromJson(course.toJson());
+      expect(copy.grades[1].date, DateTime(2026, 10, 5));
+      expect(copy.grades[0].date, isNull);
+    });
+
     test('normalizes course codes', () {
       expect(Course.normalizeCode('  cs   201 '), 'CS 201');
     });

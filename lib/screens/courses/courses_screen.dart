@@ -204,7 +204,8 @@ class _EmptyTerm extends StatelessWidget {
             'Add the courses you register for this term. You can copy the '
             'code, title and credit hours from your registration slip.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
+            style:
+                TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
           ),
         ],
       ),

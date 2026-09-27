@@ -26,6 +26,26 @@ class Course {
 
   bool get hasGrades => grades.isNotEmpty && counted > 0;
 
+  /// Grades grouped in assessment order (quizzes first, final last),
+  /// keeping the order they were entered within each type.
+  List<Grade> get sortedGrades {
+    final indexed = grades.indexed.toList()
+      ..sort((a, b) {
+        final byType = a.$2.type.index.compareTo(b.$2.type.index);
+        return byType != 0 ? byType : a.$1.compareTo(b.$1);
+      });
+    return [for (final (_, g) in indexed) g];
+  }
+
+  /// Suggested name for the next grade of [type], e.g. "Quiz 3".
+  String nextLabelFor(GradeType type) {
+    if (type == GradeType.midExam || type == GradeType.finalExam) {
+      return type.label;
+    }
+    final count = grades.where((g) => g.type == type).length;
+    return '${type.label} ${count + 1}';
+  }
+
   /// Percentage of counted marks earned, 0 when nothing is entered.
   double get percent => hasGrades ? earned / counted * 100 : 0;
 

@@ -18,6 +18,7 @@ class Grade {
     required this.label,
     required this.score,
     required this.outOf,
+    this.date,
   });
 
   final String id;
@@ -26,12 +27,16 @@ class Grade {
   final double score;
   final double outOf;
 
+  /// When it was taken or handed back, if the student noted it.
+  final DateTime? date;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'type': type.name,
         'label': label,
         'score': score,
         'outOf': outOf,
+        if (date != null) 'date': date!.toIso8601String(),
       };
 
   factory Grade.fromJson(Map<String, dynamic> json) => Grade(
@@ -40,5 +45,8 @@ class Grade {
         label: json['label'] as String,
         score: (json['score'] as num).toDouble(),
         outOf: (json['outOf'] as num).toDouble(),
+        date: json['date'] == null
+            ? null
+            : DateTime.parse(json['date'] as String),
       );
 }

@@ -27,6 +27,11 @@ const _months = [
 String longDate(DateTime date) =>
     '${_weekdays[date.weekday - 1]}, ${date.day} ${_months[date.month - 1]}';
 
+/// e.g. "Mon 26 Oct".
+String shortDate(DateTime date) =>
+    '${_weekdays[date.weekday - 1].substring(0, 3)} ${date.day} '
+    '${_months[date.month - 1].substring(0, 3)}';
+
 String greeting(DateTime now) {
   if (now.hour < 12) return 'Good morning';
   if (now.hour < 17) return 'Good afternoon';
