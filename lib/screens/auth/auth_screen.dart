@@ -5,11 +5,10 @@ import 'package:provider/provider.dart';
 import '../../data/auth_repository.dart';
 import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_theme.dart';
 import '../../util/validators.dart';
-import '../../widgets/brand_mark.dart';
 import '../../widgets/form_bits.dart';
 import '../../widgets/pill_segments.dart';
+import 'auth_hero.dart';
 
 enum AuthMode { logIn, signUp }
 
@@ -31,254 +30,32 @@ class _AuthScreenState extends State<AuthScreen> {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: AppColors.blue,
-        body: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: SafeArea(
-                      bottom: false,
-                      child: _Hero(mode: _mode),
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF2356E6), Color(0xFF1537B8)],
+            ),
+          ),
+          child: CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SafeArea(
+                        bottom: false,
+                        child: AuthHero(signUp: _mode == AuthMode.signUp),
+                      ),
                     ),
-                  ),
-                  _Sheet(
-                    mode: _mode,
-                    onModeChanged: (mode) => setState(() => _mode = mode),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Hero extends StatelessWidget {
-  const _Hero({required this.mode});
-
-  final AuthMode mode;
-
-  @override
-  Widget build(BuildContext context) {
-    final logIn = mode == AuthMode.logIn;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const BrandMark(),
-              const Spacer(),
-              if (!logIn) const _BatchChip(),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (logIn) const _FloatingCards(),
-          const Spacer(),
-          const SizedBox(height: 16),
-          Text(
-            logIn ? 'Your whole term,\nin one place.' : 'Join HiLCoE Go',
-            style: AppTheme.display(logIn ? 36 : 34, color: Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            logIn
-                ? 'Classes, grades, exams and attendance for HiLCoE students.'
-                : 'Set up your account in under a minute.',
-            style: const TextStyle(fontSize: 15, color: AppColors.onBlueMuted),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Decorative cards hinting at what the app tracks.
-class _FloatingCards extends StatelessWidget {
-  const _FloatingCards();
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: SizedBox(
-        height: 150,
-        width: double.infinity,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 4,
-              top: 8,
-              child: _tilted(
-                -4,
-                _card(
-                  color: Colors.white,
-                  shadow: true,
-                  child: const _TwoLine(
-                    top: 'NOW · 9:45',
-                    bottom: 'MATH 211 · Room 202',
-                    topColor: AppColors.blue,
-                    bottomColor: AppColors.ink,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: _tilted(
-                5,
-                _card(
-                  color: AppColors.navy,
-                  shadow: true,
-                  child: const _TwoLine(
-                    top: 'MID EXAM',
-                    bottom: 'in 28 days',
-                    topColor: AppColors.onBlueMuted,
-                    bottomColor: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 12,
-              top: 96,
-              child: _tilted(3, _glass('2 / 5 absences', pill: true)),
-            ),
-            Positioned(
-              right: 30,
-              top: 86,
-              child: _tilted(-2, _glass('Quiz 2 · 4 / 5')),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget _tilted(double degrees, Widget child) =>
-      Transform.rotate(angle: degrees * 3.14159 / 180, child: child);
-
-  static Widget _card({
-    required Color color,
-    required Widget child,
-    bool shadow = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: shadow
-            ? const [
-                BoxShadow(
-                  color: Color(0x380F172A),
-                  blurRadius: 24,
-                  offset: Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: child,
-    );
-  }
-
-  static Widget _glass(String text, {bool pill = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: pill ? 12 : 14,
-        vertical: pill ? 8 : 10,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-        borderRadius: BorderRadius.circular(pill ? 999 : 14),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: pill ? 13 : 15,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _TwoLine extends StatelessWidget {
-  const _TwoLine({
-    required this.top,
-    required this.bottom,
-    required this.topColor,
-    required this.bottomColor,
-  });
-
-  final String top;
-  final String bottom;
-  final Color topColor;
-  final Color bottomColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(top, style: AppTheme.eyebrow(color: topColor, size: 11)),
-        const SizedBox(height: 2),
-        Text(
-          bottom,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: bottomColor,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BatchChip extends StatelessWidget {
-  const _BatchChip();
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Transform.rotate(
-        angle: 5 * 3.14159 / 180,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x380F172A),
-                blurRadius: 24,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('BATCH', style: AppTheme.eyebrow(size: 10)),
-              const Text(
-                'DRB2301',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: AppColors.ink,
+                    _Sheet(
+                      mode: _mode,
+                      onModeChanged: (mode) => setState(() => _mode = mode),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -305,7 +82,7 @@ class _Sheet extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -318,10 +95,38 @@ class _Sheet extends StatelessWidget {
                 background: AppColors.tint,
                 height: 42,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               mode == AuthMode.logIn
                   ? const _LogInForm(key: ValueKey('login'))
                   : const _SignUpForm(key: ValueKey('signup')),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: AppColors.border)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      mode == AuthMode.logIn
+                          ? 'New to HiLCoE Go?'
+                          : 'Already have an account?',
+                      style:
+                          const TextStyle(fontSize: 14, color: AppColors.muted),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => onModeChanged(mode == AuthMode.logIn
+                        ? AuthMode.signUp
+                        : AuthMode.logIn),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: const Size(0, 44),
+                    ),
+                    child: Text(mode == AuthMode.logIn ? 'Sign up' : 'Log in'),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(child: Divider(color: AppColors.border)),
+                ],
+              ),
             ],
           ),
         ),
@@ -487,7 +292,7 @@ class _SignUpFormState extends State<_SignUpForm> {
                 decoration: const InputDecoration(hintText: 'Your name'),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             LabeledField(
               label: 'Email',
               child: TextFormField(
@@ -501,7 +306,7 @@ class _SignUpFormState extends State<_SignUpForm> {
                     const InputDecoration(hintText: 'Your email address'),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -540,7 +345,7 @@ class _SignUpFormState extends State<_SignUpForm> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             LabeledField(
               label: 'Password',
               child: PasswordField(
@@ -555,7 +360,7 @@ class _SignUpFormState extends State<_SignUpForm> {
               const SizedBox(height: 14),
               FormErrorText(_error!),
             ],
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             PrimaryButton(
               label: 'Create account',
               arrow: true,
