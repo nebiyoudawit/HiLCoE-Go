@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../courses/courses_screen.dart';
+import '../exams/exams_screen.dart';
 import 'coming_soon_screen.dart';
 import 'home_screen.dart';
 
@@ -23,7 +24,10 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          HomeScreen(onOpenCourses: () => _go(1)),
+          HomeScreen(
+            onOpenCourses: () => _go(1),
+            onOpenExams: () => _go(3),
+          ),
           const CoursesScreen(),
           const ComingSoonScreen(
             title: 'Schedule',
@@ -31,12 +35,7 @@ class _HomeShellState extends State<HomeShell> {
             message: 'Your weekly timetable, imported from the university '
                 'PDF or entered by hand, is coming next.',
           ),
-          const ComingSoonScreen(
-            title: 'Exams',
-            icon: Icons.assignment_turned_in_outlined,
-            message: 'Exam week with each exam\'s date, time and room '
-                'is coming soon.',
-          ),
+          const ExamsScreen(),
         ],
       ),
       bottomNavigationBar: DecoratedBox(

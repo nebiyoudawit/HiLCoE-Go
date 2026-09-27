@@ -9,7 +9,9 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/ids.dart';
+import '../../widgets/date_button.dart';
 import '../../widgets/form_bits.dart';
+import '../../widgets/select_chip.dart';
 
 /// Enters one grade, e.g. Mid exam 16 / 20, or edits [existing].
 class AddGradeScreen extends StatefulWidget {
@@ -169,7 +171,7 @@ class _AddGradeScreenState extends State<AddGradeScreen> {
                         runSpacing: 8,
                         children: [
                           for (final type in GradeType.values)
-                            _TypeChip(
+                            SelectChip(
                               label: type.label,
                               selected: type == _type,
                               onTap: () => setState(() => _type = type),
@@ -248,7 +250,7 @@ class _AddGradeScreenState extends State<AddGradeScreen> {
                     LabeledField(
                       label: 'Date',
                       hint: '(optional)',
-                      child: _DateButton(
+                      child: DateButton(
                         date: _date,
                         onPick: _pickDate,
                         onClear: () => setState(() => _date = null),
@@ -264,110 +266,6 @@ class _AddGradeScreenState extends State<AddGradeScreen> {
                   onPressed: _save,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  const _TypeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: Material(
-        color: selected ? AppColors.blue : AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: selected ? AppColors.blue : AppColors.inputBorder,
-          ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            // A shrink-wrapped Row keeps the chip as wide as its label.
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: selected ? Colors.white : AppColors.ink,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DateButton extends StatelessWidget {
-  const _DateButton({
-    required this.date,
-    required this.onPick,
-    required this.onClear,
-  });
-
-  final DateTime? date;
-  final VoidCallback onPick;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.inputBorder),
-      ),
-      child: InkWell(
-        onTap: onPick,
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          height: 50,
-          child: Row(
-            children: [
-              const SizedBox(width: 14),
-              const Icon(Icons.event_outlined, color: AppColors.blue, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  date == null ? 'Pick a date' : shortDate(date!),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: date == null ? AppColors.placeholder : AppColors.ink,
-                  ),
-                ),
-              ),
-              if (date != null)
-                IconButton(
-                  tooltip: 'Clear date',
-                  onPressed: onClear,
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  color: AppColors.muted,
-                ),
             ],
           ),
         ),

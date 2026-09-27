@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/course_repository.dart';
 import '../models/course.dart';
+import '../models/exam.dart';
 import '../models/grade.dart';
 import '../models/term.dart';
 
@@ -11,6 +12,7 @@ class CourseState extends ChangeNotifier {
   final CourseRepository _repo;
   String? _email;
   List<Course> _courses = const [];
+  List<Exam> _exams = const [];
   Term _term;
 
   /// The term the Courses tab is showing.
@@ -30,6 +32,7 @@ class CourseState extends ChangeNotifier {
     if (email == _email) return;
     _email = email;
     _courses = email == null ? const [] : _repo.load(email);
+    _exams = email == null ? const [] : _repo.loadExams(email);
   }
 
   List<Course> coursesFor(Term term) =>
@@ -103,8 +106,56 @@ class CourseState extends ChangeNotifier {
     return top;
   }
 
-  Future<void> remove(String id) =>
-      _commit(_courses.where((c) => c.id != id).toList());
+  /// Deletes a course along with its exams.
+  Future<void> remove(String id) async {
+    if (_exams.any((e) => e.courseId == id)) {
+      await _commitExams(_exams.where((e) => e.courseId != id).toList());
+    }
+    await _commit(_courses.where((c) => c.id != id).toList());
+  }
+
+  /// Exams for this [term]'s courses, soonest first.
+  List<Exam> examsFor(Term term) {
+    final ids = {for (final c in coursesFor(term)) c.id};
+    return _exams.where((e) => ids.contains(e.courseId)).toList()
+      ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+  }
+
+  /// The first exam today or later in any term, or null if none.
+  Exam? nextExam(DateTime now) {
+    Exam? next;
+    for (final e in _exams) {
+      if (e.daysFrom(now) < 0 || byId(e.courseId) == null) continue;
+      if (next == null || e.startsAt.isBefore(next.startsAt)) next = e;
+    }
+    return next;
+  }
+
+  Exam? examById(String id) {
+    for (final e in _exams) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  /// Adds [exam], or replaces the exam with the same id.
+  Future<void> saveExam(Exam exam) {
+    final exists = _exams.any((e) => e.id == exam.id);
+    return _commitExams(exists
+        ? [for (final e in _exams) e.id == exam.id ? exam : e]
+        : [..._exams, exam]);
+  }
+
+  Future<void> removeExam(String id) =>
+      _commitExams(_exams.where((e) => e.id != id).toList());
+
+  Future<void> _commitExams(List<Exam> next) async {
+    final email = _email;
+    if (email == null) return;
+    _exams = next;
+    notifyListeners();
+    await _repo.saveExams(email, next);
+  }
 
   Future<void> _commit(List<Course> next) async {
     final email = _email;

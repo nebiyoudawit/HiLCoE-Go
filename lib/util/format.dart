@@ -32,6 +32,14 @@ String shortDate(DateTime date) =>
     '${_weekdays[date.weekday - 1].substring(0, 3)} ${date.day} '
     '${_months[date.month - 1].substring(0, 3)}';
 
+/// e.g. "MON".
+String weekdayCode(DateTime date) =>
+    _weekdays[date.weekday - 1].substring(0, 3).toUpperCase();
+
+/// 24-hour clock time from minutes after midnight, e.g. 585 -> "9:45".
+String clockTime(int minutes) =>
+    '${minutes ~/ 60}:${(minutes % 60).toString().padLeft(2, '0')}';
+
 String greeting(DateTime now) {
   if (now.hour < 12) return 'Good morning';
   if (now.hour < 17) return 'Good afternoon';

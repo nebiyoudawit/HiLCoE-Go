@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hilcoe_go/models/course.dart';
+import 'package:hilcoe_go/models/exam.dart';
+import 'package:hilcoe_go/util/format.dart';
 import 'package:hilcoe_go/models/grade.dart';
 import 'package:hilcoe_go/models/term.dart';
 import 'package:hilcoe_go/util/validators.dart';
@@ -105,6 +107,24 @@ void main() {
     test('normalizes course codes', () {
       expect(Course.normalizeCode('  cs   201 '), 'CS 201');
     });
+  });
+
+  test('exam start time, countdown and JSON', () {
+    final exam = Exam(
+      id: 'e1',
+      courseId: 'c1',
+      type: ExamType.mid,
+      date: DateTime(2026, 10, 26),
+      startMinutes: 585,
+      room: '401',
+    );
+    expect(exam.startsAt, DateTime(2026, 10, 26, 9, 45));
+    expect(exam.daysFrom(DateTime(2026, 9, 28, 23, 59)), 28);
+    expect(exam.daysFrom(DateTime(2026, 10, 26, 18)), 0);
+    expect(clockTime(exam.startMinutes), '9:45');
+    final copy = Exam.fromJson(exam.toJson());
+    expect(copy.type, ExamType.mid);
+    expect(copy.room, '401');
   });
 
   group('Terms', () {
