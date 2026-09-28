@@ -85,6 +85,54 @@ class AuthRepository {
 
   Future<void> logOut() => _store.remove(_sessionKey);
 
+  /// Saves new profile details for the signed-in account. Email stays
+  /// the same because it identifies the account.
+  Future<AppUser> updateProfile({
+    required String name,
+    required String batch,
+    String? studentId,
+  }) async {
+    final key = _store.getString(_sessionKey);
+    final users = _users();
+    final record = users[key] as Map<String, dynamic>?;
+    if (key == null || record == null) {
+      throw const AuthException('You are signed out. Log in again.');
+    }
+    final user = AppUser(
+      name: name.trim(),
+      email: key,
+      batch: batch.trim(),
+      studentId: (studentId == null || studentId.trim().isEmpty)
+          ? null
+          : studentId.trim(),
+    );
+    users[key] = {
+      ...user.toJson(),
+      'salt': record['salt'],
+      'hash': record['hash'],
+    };
+    await _store.writeJson(_usersKey, users);
+    return user;
+  }
+
+  Future<void> changePassword({
+    required String current,
+    required String next,
+  }) async {
+    final key = _store.getString(_sessionKey);
+    final users = _users();
+    final record = users[key] as Map<String, dynamic>?;
+    if (key == null || record == null) {
+      throw const AuthException('You are signed out. Log in again.');
+    }
+    if (record['hash'] != _hash(current, record['salt'] as String)) {
+      throw const AuthException('Your current password is wrong.');
+    }
+    final salt = _newSalt();
+    users[key] = {...record, 'salt': salt, 'hash': _hash(next, salt)};
+    await _store.writeJson(_usersKey, users);
+  }
+
   static String _newSalt() {
     final random = Random.secure();
     return base64Url.encode(List.generate(16, (_) => random.nextInt(256)));

@@ -7,7 +7,10 @@ import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
+import '../../widgets/form_bits.dart';
+import '../profile/edit_profile_screen.dart';
 import 'home_tiles.dart';
+import 'now_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -59,6 +62,7 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
+          const NowCard(),
           _TermCard(
             termCode: term.code,
             courseCount: courses.length,
@@ -186,6 +190,19 @@ class _AccountButton extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
+              PrimaryButton(
+                label: 'Edit profile',
+                icon: Icons.edit_outlined,
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const EditProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.of(sheetContext).pop();

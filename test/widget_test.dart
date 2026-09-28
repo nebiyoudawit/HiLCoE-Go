@@ -5,6 +5,7 @@ import 'package:hilcoe_go/models/exam.dart';
 import 'package:hilcoe_go/util/format.dart';
 import 'package:hilcoe_go/models/grade.dart';
 import 'package:hilcoe_go/models/term.dart';
+import 'package:hilcoe_go/screens/home/now_card.dart';
 import 'package:hilcoe_go/util/validators.dart';
 
 void main() {
@@ -136,6 +137,18 @@ void main() {
         id: 's1', courseId: 'c1', weekday: 1, period: 3, room: 'LAB 201');
     expect(slot.isLab, isTrue);
     expect(ClassSlot.fromJson(slot.toJson()).period, 3);
+  });
+
+  test('now card picks the running or next class', () {
+    ClassSlot at(int period) =>
+        ClassSlot(id: 's$period', courseId: 'c', weekday: 1, period: period);
+    final classes = {1: at(1), 3: at(3)}; // 9:45 and 14:00
+    expect(remainingPeriods(classes, DateTime.monday, 9 * 60), [1, 3]);
+    expect(remainingPeriods(classes, DateTime.monday, 10 * 60), [1, 3]);
+    expect(remainingPeriods(classes, DateTime.monday, 12 * 60), [3]);
+    expect(remainingPeriods(classes, DateTime.monday, 16 * 60), isEmpty);
+    // Saturday has no 4th period.
+    expect(remainingPeriods(classes, DateTime.saturday, 12 * 60), isEmpty);
   });
 
   group('Terms', () {

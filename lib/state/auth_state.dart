@@ -34,6 +34,25 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateProfile({
+    required String name,
+    required String batch,
+    String? studentId,
+  }) async {
+    _user = await _repo.updateProfile(
+      name: name,
+      batch: batch,
+      studentId: studentId,
+    );
+    notifyListeners();
+  }
+
+  Future<void> changePassword({
+    required String current,
+    required String next,
+  }) =>
+      _repo.changePassword(current: current, next: next);
+
   Future<void> logOut() async {
     await _repo.logOut();
     _user = null;
