@@ -51,3 +51,7 @@ String formatMark(double value) {
   if (value == value.roundToDouble()) return value.toInt().toString();
   return value.toStringAsFixed(1);
 }
+
+/// e.g. "3.52" or "3.52 (est.)" while any course still lacks its final.
+String formatGpa(({double gpa, bool estimated}) value) =>
+    '${value.gpa.toStringAsFixed(2)}${value.estimated ? ' (est.)' : ''}';

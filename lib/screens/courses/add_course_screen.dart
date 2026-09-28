@@ -9,12 +9,19 @@ import '../../theme/app_theme.dart';
 import '../../util/ids.dart';
 import '../../widgets/form_bits.dart';
 import '../../widgets/pill_segments.dart';
+import '../../widgets/year_picker.dart';
 
 /// Adds a course, or edits one when [existing] is given.
 class AddCourseScreen extends StatefulWidget {
-  const AddCourseScreen({super.key, this.initialTerm, this.existing});
+  const AddCourseScreen({
+    super.key,
+    this.initialTerm,
+    this.initialYear,
+    this.existing,
+  });
 
   final Term? initialTerm;
+  final int? initialYear;
   final Course? existing;
 
   @override
@@ -29,6 +36,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   late final TextEditingController _code;
   late final TextEditingController _title;
   late Term _term;
+  late int _year;
   late int _credits;
 
   bool get _editing => widget.existing != null;
@@ -40,6 +48,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     _code = TextEditingController(text: c?.code);
     _title = TextEditingController(text: c?.title);
     _term = c?.term ?? widget.initialTerm ?? Term.current();
+    _year = c?.year ?? widget.initialYear ?? academicStartYear();
     _credits = c?.creditHours ?? 3;
   }
 
@@ -55,8 +64,11 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     if (v.isEmpty) return 'Enter the course code';
     final taken = context
         .read<CourseState>()
-        .codeTaken(_term, v, exceptId: widget.existing?.id);
-    if (taken) return '${Course.normalizeCode(v)} is already in ${_term.code}';
+        .codeTaken(_term, _year, v, exceptId: widget.existing?.id);
+    if (taken) {
+      return '${Course.normalizeCode(v)} is already in '
+          '${_term.code} ${yearLabel(_year)}';
+    }
     return null;
   }
 
@@ -73,11 +85,14 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
         code: code,
         title: title,
         creditHours: _credits,
+        year: _year,
       ));
-      // Show the term the course went into.
+      // Show the year and term the course went into.
       state.term = _term;
+      state.viewYear = _year;
     } else {
       await state.update(existing.copyWith(
+        year: _year,
         term: _term,
         code: code,
         title: title,
@@ -147,6 +162,16 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                     Text(
                       _editing ? 'Edit course' : 'Add course',
                       style: AppTheme.display(30),
+                    ),
+                    const SizedBox(height: 18),
+                    LabeledField(
+                      label: 'Academic year',
+                      child: YearButton(
+                        year: _year,
+                        suffix: '',
+                        boxed: true,
+                        onChanged: (y) => setState(() => _year = y),
+                      ),
                     ),
                     const SizedBox(height: 18),
                     LabeledField(

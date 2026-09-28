@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/course.dart';
+import '../../models/grading.dart';
 import '../../models/term.dart';
 import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
+import '../../widgets/app_header.dart';
 import '../../widgets/pill_segments.dart';
+import '../../widgets/year_picker.dart';
 import 'add_course_screen.dart';
 import 'course_detail_screen.dart';
 
@@ -18,14 +21,17 @@ class CoursesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<CourseState>();
     final term = state.term;
-    final courses = state.coursesFor(term);
-    final credits = state.creditHoursFor(term);
+    final year = state.viewYear;
+    final courses = state.coursesFor(term, year: year);
+    final credits = state.creditHoursFor(term, year: year);
+    final gpa = gpaOf(courses);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => AddCourseScreen(initialTerm: term),
+            builder: (_) =>
+                AddCourseScreen(initialTerm: term, initialYear: year),
           ),
         ),
         icon: const Icon(Icons.add_rounded),
@@ -33,13 +39,29 @@ class CoursesScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 96),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
           children: [
-            Text('Courses', style: AppTheme.display(32)),
-            const SizedBox(height: 4),
-            Text(
-              '${academicYearLabel()} academic year',
-              style: const TextStyle(fontSize: 14, color: AppColors.muted),
+            const AppHeader(),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Courses',
+                          style: AppTheme.display(34, color: AppColors.navy)),
+                      const SizedBox(height: 4),
+                      YearButton(
+                        year: year,
+                        onChanged: (y) =>
+                            context.read<CourseState>().viewYear = y,
+                      ),
+                    ],
+                  ),
+                ),
+                const _BooksBadge(),
+              ],
             ),
             const SizedBox(height: 14),
             PillSegments<Term>(
@@ -54,7 +76,8 @@ class CoursesScreen extends StatelessWidget {
                   ? '${term.longName} term'
                   : '${courses.length} '
                       '${courses.length == 1 ? 'course' : 'courses'}'
-                      ' · $credits credit hours',
+                      ' · $credits credit hours'
+                      '${gpa == null ? '' : ' · GPA ${formatGpa(gpa)}'}',
               style: const TextStyle(fontSize: 14, color: AppColors.muted),
             ),
             const SizedBox(height: 10),
@@ -82,70 +105,57 @@ class CourseCard extends StatelessWidget {
     final started = course.hasGrades;
     final status = started
         ? '${formatMark(course.earned)}/${formatMark(course.counted)}'
-            ' · ${course.percent.round()}%'
+            ' · ${course.percent.round()}% · ${course.letter!.letter}'
         : 'Not started';
 
     return Material(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         side: const BorderSide(color: AppColors.border),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => CourseDetailScreen(courseId: course.id),
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          padding: const EdgeInsets.fromLTRB(14, 14, 16, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(course.code, style: AppTheme.eyebrow()),
-                        const SizedBox(height: 2),
-                        Text(
-                          course.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.blue,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${course.creditHours} cr hrs',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(course.code,
+                        style: const TextStyle(
+                            fontSize: 13, color: AppColors.muted)),
+                    const SizedBox(height: 2),
+                    Text(
+                      course.title,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.muted,
+                        color: AppColors.navy,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
+                    const SizedBox(height: 12),
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(3),
                       child: LinearProgressIndicator(
                         value: course.percent / 100,
@@ -154,19 +164,26 @@ class CourseCard extends StatelessWidget {
                         backgroundColor: AppColors.track,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${course.creditHours} cr hrs',
+                    style:
+                        const TextStyle(fontSize: 13, color: AppColors.muted),
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 116,
-                    child: Text(
-                      status,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: started ? AppColors.ink : AppColors.subtle,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+                  const SizedBox(height: 14),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: started ? AppColors.navy : AppColors.subtle,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
@@ -174,6 +191,29 @@ class CourseCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Soft stack-of-books badge beside the Courses title.
+class _BooksBadge extends StatelessWidget {
+  const _BooksBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [Color(0xFFDCE6FC), Color(0x00DCE6FC)],
+          ),
+        ),
+        child: const Icon(Icons.auto_stories_rounded,
+            size: 42, color: AppColors.blue),
       ),
     );
   }

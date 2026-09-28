@@ -4,6 +4,7 @@ import 'package:hilcoe_go/models/course.dart';
 import 'package:hilcoe_go/models/exam.dart';
 import 'package:hilcoe_go/util/format.dart';
 import 'package:hilcoe_go/models/grade.dart';
+import 'package:hilcoe_go/models/grading.dart';
 import 'package:hilcoe_go/models/term.dart';
 import 'package:hilcoe_go/screens/home/now_card.dart';
 import 'package:hilcoe_go/util/validators.dart';
@@ -17,6 +18,7 @@ void main() {
         code: 'CS 201',
         title: 'Data Structures',
         creditHours: 4,
+        year: 2026,
         grades: [
           Grade(
               id: 'g1',
@@ -44,6 +46,7 @@ void main() {
         code: 'MATH 211',
         title: 'Linear Algebra',
         creditHours: 3,
+        year: 2026,
       );
       final copy = Course.fromJson(course.toJson());
       expect(copy.term, Term.win);
@@ -58,6 +61,7 @@ void main() {
         code: 'CS 201',
         title: 'Data Structures',
         creditHours: 4,
+        year: 2026,
         grades: [
           const Grade(
               id: 'm',
@@ -95,6 +99,7 @@ void main() {
         code: 'CS 221',
         title: 'Computer Organization',
         creditHours: 3,
+        year: 2026,
         absences: [for (var d = 1; d <= 6; d++) DateTime(2026, 10, d)],
       );
       expect(course.absenceCount, 6);
@@ -149,6 +154,43 @@ void main() {
     expect(remainingPeriods(classes, DateTime.monday, 16 * 60), isEmpty);
     // Saturday has no 4th period.
     expect(remainingPeriods(classes, DateTime.saturday, 12 * 60), isEmpty);
+  });
+
+  test('letter grades and credit-weighted GPA', () {
+    expect(LetterGrade.forPercent(92).letter, 'A+');
+    expect(LetterGrade.forPercent(85).letter, 'A');
+    expect(LetterGrade.forPercent(84.9).letter, 'B+');
+    expect(LetterGrade.forPercent(65).letter, 'B');
+    expect(LetterGrade.forPercent(62).letter, 'C+');
+    expect(LetterGrade.forPercent(59).letter, 'C');
+    expect(LetterGrade.forPercent(52).letter, 'C');
+    expect(LetterGrade.forPercent(45).letter, 'D');
+    expect(LetterGrade.forPercent(39).letter, 'F');
+
+    Course course(String id, int credits, double score,
+            {bool finalIn = false}) =>
+        Course(
+          id: id,
+          term: Term.aut,
+          code: id,
+          title: id,
+          creditHours: credits,
+          year: 2026,
+          grades: [
+            Grade(
+              id: 'g',
+              type: finalIn ? GradeType.finalExam : GradeType.midExam,
+              label: 'x',
+              score: score,
+              outOf: 100,
+            ),
+          ],
+        );
+    // 4 cr of A (4.0) and 2 cr of B (3.0): (16 + 6) / 6 = 3.67
+    final gpa = gpaOf([course('a', 4, 88), course('b', 2, 70, finalIn: true)])!;
+    expect(gpa.gpa, closeTo(3.667, 0.001));
+    expect(gpa.estimated, isTrue);
+    expect(gpaOf([]), isNull);
   });
 
   group('Terms', () {

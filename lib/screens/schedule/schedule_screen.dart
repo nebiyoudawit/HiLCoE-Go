@@ -6,6 +6,7 @@ import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
+import '../../widgets/app_header.dart';
 import 'class_editor.dart';
 
 /// Weekly timetable, Monday to Saturday, filled in by hand.
@@ -32,9 +33,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
-          Text('Schedule', style: AppTheme.display(32)),
+          const AppHeader(),
+          const SizedBox(height: 22),
+          Text('Schedule', style: AppTheme.display(34, color: AppColors.navy)),
           const SizedBox(height: 4),
           Text(
             hasCourses

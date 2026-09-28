@@ -8,6 +8,7 @@ class Course {
     required this.code,
     required this.title,
     required this.creditHours,
+    required this.year,
     this.grades = const [],
     this.absences = const [],
   });
@@ -20,6 +21,10 @@ class Course {
   final String code;
   final String title;
   final int creditHours;
+
+  /// Academic year the course was taken, by its starting calendar year
+  /// (2026 for 2026–27).
+  final int year;
   final List<Grade> grades;
 
   /// The day of each class missed, in the order they were logged.
@@ -66,6 +71,7 @@ class Course {
     String? code,
     String? title,
     int? creditHours,
+    int? year,
     List<Grade>? grades,
     List<DateTime>? absences,
   }) {
@@ -75,6 +81,7 @@ class Course {
       code: code ?? this.code,
       title: title ?? this.title,
       creditHours: creditHours ?? this.creditHours,
+      year: year ?? this.year,
       grades: grades ?? this.grades,
       absences: absences ?? this.absences,
     );
@@ -86,6 +93,7 @@ class Course {
         'code': code,
         'title': title,
         'creditHours': creditHours,
+        'year': year,
         'grades': grades.map((g) => g.toJson()).toList(),
         'absences': absences.map((d) => d.toIso8601String()).toList(),
       };
@@ -96,6 +104,8 @@ class Course {
         code: json['code'] as String,
         title: json['title'] as String,
         creditHours: json['creditHours'] as int,
+        // Courses saved before years existed belong to the current year.
+        year: json['year'] as int? ?? academicStartYear(),
         grades: [
           for (final g in (json['grades'] as List? ?? const []))
             Grade.fromJson(g as Map<String, dynamic>),

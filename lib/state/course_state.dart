@@ -8,7 +8,9 @@ import '../models/grade.dart';
 import '../models/term.dart';
 
 class CourseState extends ChangeNotifier {
-  CourseState(this._repo) : _term = Term.current();
+  CourseState(this._repo)
+      : _term = Term.current(),
+        _viewYear = academicStartYear();
 
   final CourseRepository _repo;
   String? _email;
@@ -16,6 +18,33 @@ class CourseState extends ChangeNotifier {
   List<Exam> _exams = const [];
   List<ClassSlot> _slots = const [];
   Term _term;
+  int _viewYear;
+
+  /// The academic year running now. A fresh one starts each September.
+  int get currentYear => academicStartYear();
+
+  /// The academic year the Courses tab is showing; other tabs always use
+  /// [currentYear].
+  int get viewYear => _viewYear;
+
+  set viewYear(int value) {
+    if (value == _viewYear) return;
+    _viewYear = value;
+    notifyListeners();
+  }
+
+  /// Years to offer in the year picker: this year, the five before it,
+  /// and any other year that has courses, newest first.
+  List<int> get pickableYears {
+    final years = {
+      for (var y = currentYear; y > currentYear - 6; y--) y,
+      for (final c in _courses) c.year,
+    }.toList()
+      ..sort((a, b) => b.compareTo(a));
+    return years;
+  }
+
+  int courseCountIn(int year) => _courses.where((c) => c.year == year).length;
 
   /// The term the Courses tab is showing.
   Term get term => _term;
@@ -38,11 +67,14 @@ class CourseState extends ChangeNotifier {
     _slots = email == null ? const [] : _repo.loadSchedule(email);
   }
 
-  List<Course> coursesFor(Term term) =>
-      _courses.where((c) => c.term == term).toList();
+  /// Courses in [term] of [year], which defaults to the current year.
+  List<Course> coursesFor(Term term, {int? year}) {
+    final y = year ?? currentYear;
+    return _courses.where((c) => c.term == term && c.year == y).toList();
+  }
 
-  int creditHoursFor(Term term) =>
-      coursesFor(term).fold(0, (sum, c) => sum + c.creditHours);
+  int creditHoursFor(Term term, {int? year}) =>
+      coursesFor(term, year: year).fold(0, (sum, c) => sum + c.creditHours);
 
   Course? byId(String id) {
     for (final c in _courses) {
@@ -51,10 +83,13 @@ class CourseState extends ChangeNotifier {
     return null;
   }
 
-  bool codeTaken(Term term, String code, {String? exceptId}) {
+  bool codeTaken(Term term, int year, String code, {String? exceptId}) {
     final normalized = Course.normalizeCode(code);
-    return _courses
-        .any((c) => c.term == term && c.code == normalized && c.id != exceptId);
+    return _courses.any((c) =>
+        c.term == term &&
+        c.year == year &&
+        c.code == normalized &&
+        c.id != exceptId);
   }
 
   Future<void> add(Course course) => _commit([..._courses, course]);

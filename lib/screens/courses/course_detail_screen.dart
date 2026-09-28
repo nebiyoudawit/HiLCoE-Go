@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../models/course.dart';
 import '../../models/grade.dart';
+import '../../models/grading.dart';
+import '../../models/term.dart';
 import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
@@ -77,7 +79,9 @@ class CourseDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: [
           Text(
-            '${course.code} · ${course.term.code} · '
+            '${course.code} · ${course.term.code}'
+            '${course.year == academicStartYear() ? '' : ' ${yearLabel(course.year)}'}'
+            ' · '
             '${course.creditHours} CREDIT '
             '${course.creditHours == 1 ? 'HOUR' : 'HOURS'}',
             style: AppTheme.eyebrow(size: 13),
@@ -158,7 +162,9 @@ class _TotalCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                course.hasGrades ? '${course.percent.round()}%' : '–',
+                course.hasGrades
+                    ? '${course.percent.round()}% · ${course.letter!.letter}'
+                    : '–',
                 style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w600,
@@ -167,7 +173,11 @@ class _TotalCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                count == 1 ? '1 grade entered' : '$count grades entered',
+                course.hasGrades && !course.letterIsFinal
+                    ? 'Estimate until the final'
+                    : count == 1
+                        ? '1 grade entered'
+                        : '$count grades entered',
                 style:
                     const TextStyle(fontSize: 13, color: AppColors.onBlueMuted),
               ),

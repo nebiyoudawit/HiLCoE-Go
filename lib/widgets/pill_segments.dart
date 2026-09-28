@@ -13,7 +13,12 @@ class PillSegments<T> extends StatelessWidget {
     required this.onChanged,
     this.background = AppColors.segment,
     this.height = 44,
+    this.filled = true,
   });
+
+  /// Filled blue "bubble" for the selected option; false gives the
+  /// quieter white pill used on the log in / sign up switch.
+  final bool filled;
 
   final List<T> values;
   final T selected;
@@ -27,8 +32,8 @@ class PillSegments<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(13),
+        color: filled ? AppColors.tint : background,
+        borderRadius: BorderRadius.circular(filled ? 16 : 13),
       ),
       child: Row(
         children: [
@@ -54,24 +59,40 @@ class PillSegments<T> extends StatelessWidget {
           height: height,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.surface : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? const [
-                    BoxShadow(
-                      color: Color(0x240F172A),
-                      blurRadius: 3,
-                      offset: Offset(0, 1),
-                    ),
-                  ]
-                : null,
+            color: !isSelected
+                ? Colors.transparent
+                : filled
+                    ? AppColors.blue
+                    : AppColors.surface,
+            borderRadius: BorderRadius.circular(filled ? 12 : 10),
+            boxShadow: !isSelected
+                ? null
+                : filled
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x401D4ED8),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ]
+                    : const [
+                        BoxShadow(
+                          color: Color(0x240F172A),
+                          blurRadius: 3,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
           ),
           child: Text(
             labelOf(value),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: isSelected ? AppColors.ink : AppColors.muted,
+              color: !isSelected
+                  ? AppColors.muted
+                  : filled
+                      ? Colors.white
+                      : AppColors.ink,
             ),
           ),
         ),

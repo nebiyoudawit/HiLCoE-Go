@@ -94,6 +94,7 @@ class _Sheet extends StatelessWidget {
                 onChanged: onModeChanged,
                 background: AppColors.tint,
                 height: 42,
+                filled: false,
               ),
               const SizedBox(height: 14),
               mode == AuthMode.logIn

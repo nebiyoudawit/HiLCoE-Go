@@ -124,7 +124,10 @@ class _AddExamScreenState extends State<AddExamScreen> {
     final state = context.watch<CourseState>();
     final editingCourse =
         _editing ? state.byId(widget.existing!.courseId) : null;
-    final courses = state.coursesFor(editingCourse?.term ?? state.term);
+    final courses = state.coursesFor(
+      editingCourse?.term ?? state.term,
+      year: editingCourse?.year,
+    );
     final customTime = !periodStarts.contains(_start);
 
     return Scaffold(

@@ -16,7 +16,15 @@ class CourseRepository {
   List<Course> load(String email) {
     final raw = _store.readJson(_key(email)) as List<dynamic>?;
     if (raw == null) return [];
-    return [for (final c in raw) Course.fromJson(c as Map<String, dynamic>)];
+    final courses = [
+      for (final c in raw) Course.fromJson(c as Map<String, dynamic>),
+    ];
+    // Pin courses saved before academic years existed to this year, so
+    // they don't move into next year's list when September comes.
+    if (raw.any((c) => (c as Map<String, dynamic>)['year'] == null)) {
+      save(email, courses);
+    }
+    return courses;
   }
 
   Future<void> save(String email, List<Course> courses) =>

@@ -8,17 +8,22 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../widgets/absence_meter.dart';
+import '../../widgets/app_header.dart';
 import '../attendance/attendance_screen.dart';
 
 /// White tile with a caption, a big figure and detail lines below.
 class _HomeTile extends StatelessWidget {
   const _HomeTile({
+    required this.icon,
     required this.caption,
     required this.figure,
     required this.children,
     required this.onTap,
+    this.chevron = false,
   });
 
+  final IconData icon;
+  final bool chevron;
   final String caption;
   final Widget figure;
   final List<Widget> children;
@@ -29,20 +34,36 @@ class _HomeTile extends StatelessWidget {
     return Material(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         side: const BorderSide(color: AppColors.border),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(caption, style: AppTheme.eyebrow(color: AppColors.navy)),
-              const SizedBox(height: 6),
-              figure,
+              Row(
+                children: [
+                  Icon(icon, size: 20, color: AppColors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(caption,
+                        style: AppTheme.eyebrow(color: AppColors.muted)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: figure),
+                  if (chevron)
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.blue),
+                ],
+              ),
               const SizedBox(height: 6),
               ...children,
             ],
@@ -70,6 +91,7 @@ class NextExamTile extends StatelessWidget {
 
     if (exam == null || course == null) {
       return _HomeTile(
+        icon: Icons.event_note_outlined,
         caption: 'NEXT EXAM',
         figure: Text('None yet', style: AppTheme.display(22)),
         onTap: onTap,
@@ -79,6 +101,8 @@ class NextExamTile extends StatelessWidget {
 
     final days = exam.daysFrom(now);
     return _HomeTile(
+      icon: Icons.event_note_outlined,
+      chevron: true,
       caption: 'NEXT EXAM',
       figure: Text(
         switch (days) {
@@ -119,19 +143,13 @@ class TodayClasses extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Today\'s classes',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-              ),
-            ),
-            TextButton(
-              onPressed: onOpenSchedule,
-              child: const Text('Full week'),
-            ),
-          ],
+        SectionTitle(
+          icon: Icons.calendar_month_outlined,
+          title: 'Today\'s classes',
+          action: TextButton(
+            onPressed: onOpenSchedule,
+            child: const Text('Full week'),
+          ),
         ),
         const SizedBox(height: 4),
         if (periods.isEmpty)
@@ -148,10 +166,10 @@ class TodayClasses extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(17),
               child: Column(
                 children: [
                   for (var i = 0; i < periods.length; i++) ...[
@@ -198,13 +216,27 @@ class _TodayRow extends StatelessWidget {
 
     return Container(
       color: current ? AppColors.tint : null,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(10, 14, 16, 14),
       child: Row(
         children: [
           SizedBox(
-            width: 44,
+            width: 14,
+            child: current
+                ? Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                : null,
+          ),
+          SizedBox(
+            width: 96,
             child: Text(
-              clockTime(period.startMinutes),
+              '${clockTime(period.startMinutes)} – '
+              '${clockTime(period.endMinutes)}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: current ? FontWeight.w600 : FontWeight.w400,
@@ -267,6 +299,7 @@ class AttendanceTile extends StatelessWidget {
 
     if (course == null) {
       return _HomeTile(
+        icon: Icons.bar_chart_rounded,
         caption: 'ATTENDANCE',
         figure: Text('0 missed', style: AppTheme.display(22)),
         onTap: open,
@@ -275,6 +308,7 @@ class AttendanceTile extends StatelessWidget {
     }
 
     return _HomeTile(
+      icon: Icons.bar_chart_rounded,
       caption: 'MOST ABSENCES',
       figure: Text.rich(
         TextSpan(

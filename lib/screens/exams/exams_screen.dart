@@ -6,6 +6,7 @@ import '../../state/course_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
+import '../../widgets/app_header.dart';
 import '../../widgets/pill_segments.dart';
 import 'add_exam_screen.dart';
 
@@ -59,11 +60,15 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
+          const AppHeader(),
+          const SizedBox(height: 22),
           Row(
             children: [
-              Expanded(child: Text('Exams', style: AppTheme.display(32))),
+              Expanded(
+                  child: Text('Exams',
+                      style: AppTheme.display(34, color: AppColors.navy))),
               FilledButton.icon(
                 onPressed: state.coursesFor(term).isEmpty ? null : _openExam,
                 icon: const Icon(Icons.add_rounded, size: 18),

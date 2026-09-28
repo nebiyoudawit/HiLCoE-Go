@@ -23,10 +23,16 @@ enum Term {
   }
 }
 
-/// Academic year label such as "2026–27"; a new year starts in September.
-String academicYearLabel([DateTime? now]) {
+/// Calendar year an academic year starts in; a new one starts each
+/// September, e.g. 2026 for the 2026–27 year.
+int academicStartYear([DateTime? now]) {
   final date = now ?? DateTime.now();
-  final start = date.month >= 9 ? date.year : date.year - 1;
-  final end = (start + 1) % 100;
-  return '$start–${end.toString().padLeft(2, '0')}';
+  return date.month >= 9 ? date.year : date.year - 1;
 }
+
+/// Label such as "2026–27" for the year starting in [start].
+String yearLabel(int start) =>
+    '$start–${((start + 1) % 100).toString().padLeft(2, '0')}';
+
+/// Label for the academic year running at [now].
+String academicYearLabel([DateTime? now]) => yearLabel(academicStartYear(now));
