@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'app.dart';
@@ -10,6 +11,8 @@ import 'state/course_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Fonts ship in google_fonts/, so never fetch them over the network.
+  GoogleFonts.config.allowRuntimeFetching = false;
   final store = await LocalStore.open();
 
   runApp(
