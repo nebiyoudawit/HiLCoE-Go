@@ -25,14 +25,14 @@ class DateButton extends StatelessWidget {
     final button = Material(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: errorText == null ? AppColors.inputBorder : AppColors.error,
         ),
       ),
       child: InkWell(
         onTap: onPick,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: SizedBox(
           height: 50,
           child: Row(

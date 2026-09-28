@@ -33,7 +33,7 @@ class PillSegments<T> extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: filled ? AppColors.tint : background,
-        borderRadius: BorderRadius.circular(filled ? 16 : 13),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         children: [
@@ -64,7 +64,7 @@ class PillSegments<T> extends StatelessWidget {
                 : filled
                     ? AppColors.blue
                     : AppColors.surface,
-            borderRadius: BorderRadius.circular(filled ? 12 : 10),
+            borderRadius: BorderRadius.circular(999),
             boxShadow: !isSelected
                 ? null
                 : filled

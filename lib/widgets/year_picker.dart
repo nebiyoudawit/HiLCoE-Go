@@ -38,12 +38,12 @@ class YearButton extends StatelessWidget {
       return Material(
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.inputBorder),
         ),
         child: InkWell(
           onTap: pick,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: SizedBox(
             height: 50,
             child: Row(
@@ -119,7 +119,7 @@ Future<int?> showYearPicker(BuildContext context, {required int selected}) {
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 selected: y == selected,
                 selectedTileColor: AppColors.tint,

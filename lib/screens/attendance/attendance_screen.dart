@@ -219,9 +219,7 @@ class _AttendanceRow extends StatelessWidget {
               backgroundColor: AppColors.tint,
               foregroundColor: AppColors.blue,
               side: const BorderSide(color: AppColors.blue),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: const StadiumBorder(),
               textStyle:
                   const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),

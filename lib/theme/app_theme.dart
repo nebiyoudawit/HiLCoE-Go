@@ -49,7 +49,7 @@ class AppTheme {
 
     OutlineInputBorder border(Color color, [double width = 1]) {
       return OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: color, width: width),
       );
     }
@@ -83,11 +83,12 @@ class AppTheme {
           disabledBackgroundColor: AppColors.blue.withValues(alpha: 0.6),
           disabledForegroundColor: Colors.white,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: const StadiumBorder(),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(shape: const StadiumBorder()),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(

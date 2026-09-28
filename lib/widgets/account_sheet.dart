@@ -78,9 +78,7 @@ void showAccountSheet(BuildContext context) {
                 minimumSize: const Size.fromHeight(50),
                 foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                shape: const StadiumBorder(),
               ),
             ),
           ],

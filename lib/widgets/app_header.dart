@@ -32,11 +32,11 @@ class AppHeader extends StatelessWidget {
             child: Material(
               color: AppColors.tint,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(20),
                 side: const BorderSide(color: AppColors.pill),
               ),
               child: InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(20),
                 onTap: () => showAccountSheet(context),
                 child: Padding(
                   padding:

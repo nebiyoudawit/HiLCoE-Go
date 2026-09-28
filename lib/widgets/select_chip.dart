@@ -24,14 +24,14 @@ class SelectChip extends StatelessWidget {
       child: Material(
         color: selected ? AppColors.blue : AppColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(999),
           side: BorderSide(
             color: selected ? AppColors.blue : AppColors.inputBorder,
           ),
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(999),
           child: Container(
             height: 44,
             padding: const EdgeInsets.symmetric(horizontal: 14),

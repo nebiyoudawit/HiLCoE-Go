@@ -255,9 +255,7 @@ class _PasswordFormState extends State<_PasswordForm> {
               minimumSize: const Size.fromHeight(50),
               foregroundColor: AppColors.blue,
               side: const BorderSide(color: AppColors.blue),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
+              shape: const StadiumBorder(),
               textStyle:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
