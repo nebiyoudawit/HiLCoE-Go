@@ -61,28 +61,7 @@ class AuthRepository {
           batch: batch.trim(),
           studentId: _clean(studentId),
         ).toJson());
-        await cred.user!.sendEmailVerification();
       });
-
-  /// Whether the signed-in account has clicked its verification link.
-  bool get emailVerified => _auth.currentUser?.emailVerified ?? false;
-
-  Future<void> resendVerification() =>
-      _guard(() async => _signedIn().sendEmailVerification());
-
-  /// Asks Firebase for the latest account state (e.g. after the student
-  /// clicks the link) and returns whether the email is verified now.
-  /// Refreshes the ID token too, so the security rules see the change.
-  Future<bool> refreshVerified() async {
-    var verified = false;
-    await _guard(() async {
-      final user = _signedIn();
-      await user.reload();
-      await user.getIdToken(true);
-      verified = _auth.currentUser?.emailVerified ?? false;
-    });
-    return verified;
-  }
 
   /// Deletes the student's data and profile from Firestore, then the
   /// account itself. Needs the password, because Firebase only allows

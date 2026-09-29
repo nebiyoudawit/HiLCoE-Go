@@ -24,7 +24,7 @@ Grab the latest version from **[Releases](https://github.com/nebiyoudawit/HiLCoE
 **Android**
 1. Download `HiLCoE-Go-v1.0.0.apk` on your phone and open it.
 2. If Android asks, allow your browser or file manager to **install unknown apps**.
-3. Open HiLCoE Go, sign up, and verify your email.
+3. Open HiLCoE Go and sign up.
 
 **iPhone** (sideloaded, no App Store yet)
 1. Download `HiLCoE-Go-v1.0.0.ipa` to your computer.
@@ -58,7 +58,7 @@ Grab the latest version from **[Releases](https://github.com/nebiyoudawit/HiLCoE
 
 ## Features
 
-- **Accounts:** sign up with your name, email, batch (e.g. `DRB2301`) and optional student ID. Email verification, forgot password, edit profile, change password and delete account are all built in.
+- **Accounts:** sign up with your name, email, batch (e.g. `DRB2301`) and optional student ID. Forgot password, edit profile, change password and delete account are all built in.
 - **Courses by year and term:** AUT, WIN and SPR for each academic year. Add past years' courses too, and a fresh year starts every September.
 - **Grades:** enter quizzes, assignments, projects, mid and final exams one by one (e.g. `16 / 20`) and watch the running total.
 - **Letter grades and GPA:** the HiLCoE scale (A+ 90, A 85, B+ 75, B 65, C+ 60, C 50, D 40, F below), with credit-weighted term GPA and overall CGPA.
@@ -87,14 +87,14 @@ users/{uid}/data/exams         { items: [...] }
 users/{uid}/data/schedule      { items: [...] }
 ```
 
-[`firestore.rules`](firestore.rules) lets each student read and write only their own documents, and requires a verified email for course data.
+[`firestore.rules`](firestore.rules) lets each student read and write only their own documents.
 
 ### Project layout
 
 ```
 lib/
   main.dart               starts Firebase and the app state
-  app.dart                picks the screen: loading, log in, verify email or home
+  app.dart                picks the screen: loading, log in or home
   data/                   Firebase Auth + Firestore access (repositories)
   models/                 Course, Grade, Exam, ClassSlot, Term, grading scale
   state/                  AuthState and CourseState (what the screens read)
@@ -132,6 +132,7 @@ To use **your own** Firebase project instead of ours:
 
 - [ ] Exam reminders the evening before
 - [ ] Import the class schedule from the university's PDF
+- [ ] Sign in with Google
 
 ---
 

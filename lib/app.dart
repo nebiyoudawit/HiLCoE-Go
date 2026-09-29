@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/auth/auth_screen.dart';
-import 'screens/auth/verify_email_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'state/auth_state.dart';
 import 'theme/app_colors.dart';
@@ -15,7 +14,6 @@ class HilcoeGoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final ready = context.select<AuthState, bool>((a) => a.ready);
     final signedIn = context.select<AuthState, bool>((a) => a.signedIn);
-    final verify = context.select<AuthState, bool>((a) => a.needsVerification);
     return MaterialApp(
       title: 'HiLCoE Go',
       debugShowCheckedModeBanner: false,
@@ -23,11 +21,9 @@ class HilcoeGoApp extends StatelessWidget {
       // A new key per state drops any pushed routes on log in / log out.
       home: !ready
           ? const _Starting()
-          : !signedIn
-              ? const AuthScreen(key: ValueKey('auth'))
-              : verify
-                  ? const VerifyEmailScreen(key: ValueKey('verify'))
-                  : const HomeShell(key: ValueKey('home')),
+          : signedIn
+              ? const HomeShell(key: ValueKey('home'))
+              : const AuthScreen(key: ValueKey('auth')),
     );
   }
 }
