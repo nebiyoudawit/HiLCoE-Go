@@ -1,0 +1,28 @@
+# Builds an unsigned iPhone app (.ipa) on one of GitHub's Macs.
+# Run it from the Actions tab; a sideloading tool signs it on install.
+name: Build iOS IPA (unsigned)
+on: workflow_dispatch
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      # Creates ios/Podfile, then sets iOS 15 (Firebase needs it)
+      - run: flutter build ios --config-only --no-codesign
+      - run: sed -i '' "s/^# platform :ios.*/platform :ios, '15.0'/" ios/Podfile
+      - run: cd ios && pod install
+      - run: flutter build ios --release --no-codesign
+      # An .ipa is just the app inside a folder called Payload, zipped
+      - run: |
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -qr HiLCoE-Go.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HiLCoE-Go-ipa
+          path: HiLCoE-Go.ipa
