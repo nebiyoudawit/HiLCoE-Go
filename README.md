@@ -17,6 +17,21 @@
 
 ---
 
+## Download
+
+Grab the latest version from **[Releases](https://github.com/nebiyoudawit/HiLCoE-Go/releases/latest)**.
+
+**Android**
+1. Download `HiLCoE-Go-v1.0.0.apk` on your phone and open it.
+2. If Android asks, allow your browser or file manager to **install unknown apps**.
+3. Open HiLCoE Go, sign up, and verify your email.
+
+**iPhone** (sideloaded, no App Store yet)
+1. Download `HiLCoE-Go-v1.0.0.ipa` to your computer.
+2. Install it with a sideloading tool such as [Sideloadly](https://sideloadly.io) or [AltStore](https://altstore.io), signed with your own Apple ID.
+3. On the iPhone, go to **Settings → General → VPN & Device Management** and trust your Apple ID. On iOS 16 and later, also turn on **Settings → Privacy & Security → Developer Mode**.
+4. With a free Apple ID the app has to be re-installed every 7 days. Your data is saved in the cloud, so nothing is lost.
+
 ## Screenshots
 
 <table>

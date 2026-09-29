@@ -1,7 +1,7 @@
 name: hilcoe_go
 description: HiLCoE Go, a student companion app for classes, grades, exams and attendance.
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.5.0

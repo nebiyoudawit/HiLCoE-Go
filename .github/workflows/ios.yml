@@ -15,12 +15,15 @@ jobs:
       # Plugins like Firebase come in through Swift Package Manager, so no
       # Podfile is needed; the project already targets iOS 15.
       - run: flutter build ios --release --no-codesign
-      # An .ipa is just the app inside a folder called Payload, zipped
+      # An .ipa is just the app inside a folder called Payload, zipped.
+      # It's named after the version in pubspec.yaml, e.g. HiLCoE-Go-v1.0.0.ipa
       - run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')
+          echo "IPA=HiLCoE-Go-v$VERSION.ipa" >> "$GITHUB_ENV"
           mkdir Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -qr HiLCoE-Go.ipa Payload
+          zip -qr "HiLCoE-Go-v$VERSION.ipa" Payload
       - uses: actions/upload-artifact@v4
         with:
-          name: HiLCoE-Go-ipa
-          path: HiLCoE-Go.ipa
+          name: ${{ env.IPA }}
+          path: ${{ env.IPA }}
