@@ -83,20 +83,25 @@ class CourseState extends ChangeNotifier {
       if (!_attaching) notifyListeners();
     }
 
+    // Errors (e.g. "permission denied" in the moment between signing out
+    // and these listeners being cancelled) are ignored; the next sign-in
+    // subscribes afresh.
+    void ignore(Object _) {}
+
     _attaching = true;
     _subs
       ..add(_repo.watchCourses(uid).listen((v) {
         _courses = v;
         changed();
-      }))
+      }, onError: ignore))
       ..add(_repo.watchExams(uid).listen((v) {
         _exams = v;
         changed();
-      }))
+      }, onError: ignore))
       ..add(_repo.watchSchedule(uid).listen((v) {
         _slots = v;
         changed();
-      }));
+      }, onError: ignore));
     _attaching = false;
     if (email != null) _repo.importLocal(uid, email);
   }

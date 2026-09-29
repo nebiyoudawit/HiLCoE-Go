@@ -40,6 +40,34 @@ class EditProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const _PasswordForm(),
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 20),
+            const Text(
+              'Delete account',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Permanently removes your account and everything in it: '
+              'courses, grades, attendance, exams and schedule. This can\'t '
+              'be undone.',
+              style:
+                  TextStyle(fontSize: 14, height: 1.45, color: AppColors.muted),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _confirmDelete(context),
+              icon: const Icon(Icons.delete_forever_outlined),
+              label: const Text('Delete my account'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                foregroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.dangerBorder),
+                textStyle:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
           ],
         ),
       ),
@@ -170,6 +198,95 @@ class _DetailsFormState extends State<_DetailsForm> {
           PrimaryButton(label: 'Save profile', busy: _busy, onPressed: _save),
         ],
       ),
+    );
+  }
+}
+
+/// Asks for the password, then deletes the account. On success Firebase
+/// signs the student out, and the app returns to the log in screen.
+Future<void> _confirmDelete(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (_) => const _DeleteDialog(),
+  );
+}
+
+class _DeleteDialog extends StatefulWidget {
+  const _DeleteDialog();
+
+  @override
+  State<_DeleteDialog> createState() => _DeleteDialogState();
+}
+
+class _DeleteDialogState extends State<_DeleteDialog> {
+  final _password = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _delete() async {
+    if (_password.text.isEmpty) {
+      setState(() => _error = 'Enter your password to confirm.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await context.read<AuthState>().deleteAccount(_password.text);
+      // Signed out now; close the dialog and the profile screen.
+      if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    } on AuthException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete your account?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Everything will be deleted for good. Enter your '
+              'password to confirm.'),
+          const SizedBox(height: 14),
+          PasswordField(
+            controller: _password,
+            hint: 'Your password',
+            onSubmitted: _delete,
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            FormErrorText(_error!),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _busy ? null : _delete,
+          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+          child: _busy
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Delete forever'),
+        ),
+      ],
     );
   }
 }

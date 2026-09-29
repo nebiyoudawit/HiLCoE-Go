@@ -31,8 +31,13 @@ Future<void> main() async {
         ),
         ChangeNotifierProxyProvider<AuthState, CourseState>(
           create: (_) => CourseState(FirestoreCourseRepository(db, local)),
-          update: (_, auth, courses) =>
-              courses!..setUser(auth.user?.uid, email: auth.user?.email),
+          // Data loads only once the email is verified; the security
+          // rules refuse it before that.
+          update: (_, auth, courses) => courses!
+            ..setUser(
+              auth.needsVerification ? null : auth.user?.uid,
+              email: auth.user?.email,
+            ),
         ),
       ],
       child: const HilcoeGoApp(),

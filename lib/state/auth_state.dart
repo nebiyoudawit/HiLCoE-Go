@@ -19,6 +19,9 @@ class AuthState extends ChangeNotifier {
   AppUser? get user => _user;
   bool get signedIn => _user != null;
 
+  /// Signed in but hasn't clicked the verification link yet.
+  bool get needsVerification => signedIn && !_repo.emailVerified;
+
   /// False until Firebase has said whether someone is signed in.
   bool get ready => _ready;
 
@@ -71,6 +74,17 @@ class AuthState extends ChangeNotifier {
     required String next,
   }) =>
       _repo.changePassword(current: current, next: next);
+
+  Future<void> resendVerification() => _repo.resendVerification();
+
+  /// Re-checks with Firebase; moves on to the app once verified.
+  Future<bool> refreshVerified() async {
+    final verified = await _repo.refreshVerified();
+    if (verified) notifyListeners();
+    return verified;
+  }
+
+  Future<void> deleteAccount(String password) => _repo.deleteAccount(password);
 
   Future<void> logOut() => _repo.logOut();
 

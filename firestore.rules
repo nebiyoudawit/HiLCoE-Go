@@ -1,15 +1,26 @@
 rules_version = '2';
 
-// Each student can read and write only their own profile and data:
+// Each student can reach only their own profile and data:
 //   users/{uid}                 profile (name, batch, student ID)
 //   users/{uid}/data/{list}     courses, exams, schedule
+// Courses, exams and schedule also need a verified email. Deleting is
+// allowed without one, so "Delete my account" always works.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isOwner(uid);
 
       match /data/{list} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, create, update: if isOwner(uid) && isVerified();
+        allow delete: if isOwner(uid);
       }
     }
   }
