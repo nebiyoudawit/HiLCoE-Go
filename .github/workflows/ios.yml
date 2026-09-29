@@ -12,10 +12,8 @@ jobs:
         with:
           channel: stable
       - run: flutter pub get
-      # Creates ios/Podfile, then sets iOS 15 (Firebase needs it)
-      - run: flutter build ios --config-only --no-codesign
-      - run: sed -i '' "s/^# platform :ios.*/platform :ios, '15.0'/" ios/Podfile
-      - run: cd ios && pod install
+      # Plugins like Firebase come in through Swift Package Manager, so no
+      # Podfile is needed; the project already targets iOS 15.
       - run: flutter build ios --release --no-codesign
       # An .ipa is just the app inside a folder called Payload, zipped
       - run: |
