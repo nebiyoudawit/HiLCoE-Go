@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013131393627",
+    "project_id": "hilcoe-go",
+    "storage_bucket": "hilcoe-go.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013131393627:android:22de19f0f410098e80dd7e",
+        "android_client_info": {
+          "package_name": "et.edu.hilcoe.hilcoe_go"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmhwVW8YdCRzsJZwUNkST8oUUep8rinnE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

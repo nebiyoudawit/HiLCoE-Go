@@ -175,6 +175,32 @@ class _LogInFormState extends State<_LogInForm> {
     }
   }
 
+  /// Emails a password reset link to the address in the Email field.
+  Future<void> _forgot() async {
+    final problem = validateEmail(_email.text);
+    if (problem != null) {
+      setState(() => _error = 'Type your email above, then tap Forgot? again.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await context.read<AuthState>().sendPasswordReset(_email.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('If ${_email.text.trim()} has an account, a reset '
+              'link is on its way. Check your inbox.'),
+        ));
+      }
+    } on AuthException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -199,6 +225,17 @@ class _LogInFormState extends State<_LogInForm> {
             const SizedBox(height: 14),
             LabeledField(
               label: 'Password',
+              trailing: TextButton(
+                onPressed: _busy ? null : _forgot,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                child: const Text('Forgot?'),
+              ),
               child: PasswordField(
                 controller: _password,
                 hint: 'Your password',

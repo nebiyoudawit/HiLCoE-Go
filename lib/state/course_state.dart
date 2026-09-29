@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../data/course_repository.dart';
@@ -13,7 +15,12 @@ class CourseState extends ChangeNotifier {
         _viewYear = academicStartYear();
 
   final CourseRepository _repo;
-  String? _email;
+  String? _uid;
+  final _subs = <StreamSubscription<Object?>>[];
+
+  /// True while subscribing, so a repository that answers straight away
+  /// doesn't notify in the middle of a build.
+  bool _attaching = false;
   List<Course> _courses = const [];
   List<Exam> _exams = const [];
   List<ClassSlot> _slots = const [];
@@ -57,14 +64,49 @@ class CourseState extends ChangeNotifier {
 
   List<Course> get all => List.unmodifiable(_courses);
 
-  /// Switches to another account's data. Called while providers rebuild,
-  /// so it doesn't notify; the screens above it rebuild anyway.
-  void setUser(String? email) {
-    if (email == _email) return;
-    _email = email;
-    _courses = email == null ? const [] : _repo.load(email);
-    _exams = email == null ? const [] : _repo.loadExams(email);
-    _slots = email == null ? const [] : _repo.loadSchedule(email);
+  /// Switches to another account's data and keeps it in sync. Called
+  /// while providers rebuild, so it doesn't notify itself; the screens
+  /// above it rebuild anyway.
+  void setUser(String? uid, {String? email}) {
+    if (uid == _uid) return;
+    for (final sub in _subs) {
+      sub.cancel();
+    }
+    _subs.clear();
+    _uid = uid;
+    _courses = const [];
+    _exams = const [];
+    _slots = const [];
+    if (uid == null) return;
+
+    void changed() {
+      if (!_attaching) notifyListeners();
+    }
+
+    _attaching = true;
+    _subs
+      ..add(_repo.watchCourses(uid).listen((v) {
+        _courses = v;
+        changed();
+      }))
+      ..add(_repo.watchExams(uid).listen((v) {
+        _exams = v;
+        changed();
+      }))
+      ..add(_repo.watchSchedule(uid).listen((v) {
+        _slots = v;
+        changed();
+      }));
+    _attaching = false;
+    if (email != null) _repo.importLocal(uid, email);
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _subs) {
+      sub.cancel();
+    }
+    super.dispose();
   }
 
   /// Courses in [term] of [year], which defaults to the current year.
@@ -215,26 +257,26 @@ class CourseState extends ChangeNotifier {
       _commitSlots(_slots.where((s) => s.id != id).toList());
 
   Future<void> _commitSlots(List<ClassSlot> next) async {
-    final email = _email;
-    if (email == null) return;
+    final uid = _uid;
+    if (uid == null) return;
     _slots = next;
     notifyListeners();
-    await _repo.saveSchedule(email, next);
+    await _repo.saveSchedule(uid, next);
   }
 
   Future<void> _commitExams(List<Exam> next) async {
-    final email = _email;
-    if (email == null) return;
+    final uid = _uid;
+    if (uid == null) return;
     _exams = next;
     notifyListeners();
-    await _repo.saveExams(email, next);
+    await _repo.saveExams(uid, next);
   }
 
   Future<void> _commit(List<Course> next) async {
-    final email = _email;
-    if (email == null) return;
+    final uid = _uid;
+    if (uid == null) return;
     _courses = next;
     notifyListeners();
-    await _repo.save(email, next);
+    await _repo.saveCourses(uid, next);
   }
 }

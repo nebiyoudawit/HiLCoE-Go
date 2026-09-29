@@ -16,8 +16,8 @@ void main() {
 
   test('courses are split by academic year', () async {
     SharedPreferences.setMockInitialValues({});
-    final state = CourseState(CourseRepository(await LocalStore.open()))
-      ..setUser('a@example.com');
+    final state = CourseState(LocalCourseRepository(await LocalStore.open()))
+      ..setUser('uid-1');
     final now = state.currentYear;
 
     Course make(String id, int year) => Course(
@@ -39,6 +39,26 @@ void main() {
     expect(state.codeTaken(Term.aut, now - 2, 'cs 201'), isFalse);
     expect(state.pickableYears.first, now);
     expect(state.courseCountIn(now - 1), 1);
+  });
+
+  test('changes sync between two sessions on the same account', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repo = LocalCourseRepository(await LocalStore.open());
+    final phone = CourseState(repo)..setUser('uid-1');
+    final laptop = CourseState(repo)..setUser('uid-1');
+    await phone.add(Course(
+      id: 'c',
+      term: Term.win,
+      code: 'CS 202',
+      title: 'Algorithms',
+      creditHours: 4,
+      year: phone.currentYear,
+    ));
+    expect(laptop.coursesFor(Term.win).single.code, 'CS 202');
+
+    // Signing out clears what's on screen.
+    phone.setUser(null);
+    expect(phone.all, isEmpty);
   });
 
   test('old courses without a year join the current one', () {

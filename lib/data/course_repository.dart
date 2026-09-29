@@ -1,54 +1,109 @@
+import 'dart:async';
+
 import '../models/class_slot.dart';
 import '../models/course.dart';
 import '../models/exam.dart';
 import 'local_store.dart';
 
-/// Stores each account's courses (with grades and absences), exams and
-/// weekly class schedule on the device.
-class CourseRepository {
-  CourseRepository(this._store);
+/// Where a student's courses (with grades and absences), exams and weekly
+/// schedule live. Each list is watched as a stream so changes made on
+/// another device show up live.
+abstract class CourseRepository {
+  Stream<List<Course>> watchCourses(String uid);
+  Stream<List<Exam>> watchExams(String uid);
+  Stream<List<ClassSlot>> watchSchedule(String uid);
+
+  Future<void> saveCourses(String uid, List<Course> courses);
+  Future<void> saveExams(String uid, List<Exam> exams);
+  Future<void> saveSchedule(String uid, List<ClassSlot> slots);
+
+  /// Brings over data saved on this phone before accounts moved online.
+  Future<void> importLocal(String uid, String email) async {}
+}
+
+List<Course> decodeCourses(Object? raw) => [
+      for (final c in (raw as List? ?? const []))
+        Course.fromJson(Map<String, dynamic>.from(c as Map)),
+    ];
+
+List<Exam> decodeExams(Object? raw) => [
+      for (final e in (raw as List? ?? const []))
+        Exam.fromJson(Map<String, dynamic>.from(e as Map)),
+    ];
+
+List<ClassSlot> decodeSchedule(Object? raw) => [
+      for (final s in (raw as List? ?? const []))
+        ClassSlot.fromJson(Map<String, dynamic>.from(s as Map)),
+    ];
+
+/// Keeps everything in SharedPreferences on this device. Used by tests,
+/// and to read data saved before the app had cloud accounts.
+class LocalCourseRepository extends CourseRepository {
+  LocalCourseRepository(this._store);
 
   final LocalStore _store;
+  final _controllers = <String, StreamController<Object?>>{};
 
-  static String _key(String email) => 'courses.$email';
-  static String _examsKey(String email) => 'exams.$email';
+  static String coursesKey(String id) => 'courses.$id';
+  static String examsKey(String id) => 'exams.$id';
+  static String scheduleKey(String id) => 'schedule.$id';
 
-  List<Course> load(String email) {
-    final raw = _store.readJson(_key(email)) as List<dynamic>?;
-    if (raw == null) return [];
-    final courses = [
-      for (final c in raw) Course.fromJson(c as Map<String, dynamic>),
-    ];
-    // Pin courses saved before academic years existed to this year, so
-    // they don't move into next year's list when September comes.
-    if (raw.any((c) => (c as Map<String, dynamic>)['year'] == null)) {
-      save(email, courses);
-    }
-    return courses;
+  /// Emits the stored value straight away on listen, then after each save.
+  Stream<Object?> _watch(String key) {
+    final controller = _controllers.putIfAbsent(
+      key,
+      () => StreamController<Object?>.broadcast(sync: true),
+    );
+    late final StreamController<Object?> out;
+    out = StreamController<Object?>(
+      sync: true,
+      onListen: () {
+        out.add(_store.readJson(key));
+        out.addStream(controller.stream);
+      },
+    );
+    return out.stream;
   }
 
-  Future<void> save(String email, List<Course> courses) =>
-      _store.writeJson(_key(email), courses.map((c) => c.toJson()).toList());
-
-  List<Exam> loadExams(String email) {
-    final raw = _store.readJson(_examsKey(email)) as List<dynamic>?;
-    if (raw == null) return [];
-    return [for (final e in raw) Exam.fromJson(e as Map<String, dynamic>)];
+  Future<void> _save(String key, Object value) async {
+    await _store.writeJson(key, value);
+    _controllers[key]?.add(value);
   }
 
-  Future<void> saveExams(String email, List<Exam> exams) =>
-      _store.writeJson(_examsKey(email), exams.map((e) => e.toJson()).toList());
+  bool hasDataFor(String id) =>
+      _store.getString(coursesKey(id)) != null ||
+      _store.getString(examsKey(id)) != null ||
+      _store.getString(scheduleKey(id)) != null;
 
-  static String _scheduleKey(String email) => 'schedule.$email';
+  Object? read(String key) => _store.readJson(key);
 
-  List<ClassSlot> loadSchedule(String email) {
-    final raw = _store.readJson(_scheduleKey(email)) as List<dynamic>?;
-    if (raw == null) return [];
-    return [
-      for (final s in raw) ClassSlot.fromJson(s as Map<String, dynamic>),
-    ];
+  Future<void> clear(String id) async {
+    await _store.remove(coursesKey(id));
+    await _store.remove(examsKey(id));
+    await _store.remove(scheduleKey(id));
   }
 
-  Future<void> saveSchedule(String email, List<ClassSlot> slots) => _store
-      .writeJson(_scheduleKey(email), slots.map((s) => s.toJson()).toList());
+  @override
+  Stream<List<Course>> watchCourses(String uid) =>
+      _watch(coursesKey(uid)).map(decodeCourses);
+
+  @override
+  Stream<List<Exam>> watchExams(String uid) =>
+      _watch(examsKey(uid)).map(decodeExams);
+
+  @override
+  Stream<List<ClassSlot>> watchSchedule(String uid) =>
+      _watch(scheduleKey(uid)).map(decodeSchedule);
+
+  @override
+  Future<void> saveCourses(String uid, List<Course> courses) =>
+      _save(coursesKey(uid), courses.map((c) => c.toJson()).toList());
+
+  @override
+  Future<void> saveExams(String uid, List<Exam> exams) =>
+      _save(examsKey(uid), exams.map((e) => e.toJson()).toList());
+
+  @override
+  Future<void> saveSchedule(String uid, List<ClassSlot> slots) =>
+      _save(scheduleKey(uid), slots.map((s) => s.toJson()).toList());
 }

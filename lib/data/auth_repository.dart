@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_user.dart';
-import 'local_store.dart';
 
 class AuthException implements Exception {
   const AuthException(this.message);
@@ -15,129 +12,139 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
-/// On-device accounts. Passwords are stored as salted SHA-256 hashes,
-/// never in plain text. Swap this class out when a real backend exists.
+/// Accounts via Firebase Auth (email and password). The student's name,
+/// batch and ID live in the Firestore document `users/{uid}`.
 class AuthRepository {
-  AuthRepository(this._store);
+  AuthRepository(this._auth, this._db);
 
-  final LocalStore _store;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
 
-  static const _usersKey = 'auth.users';
-  static const _sessionKey = 'auth.session';
+  DocumentReference<Map<String, dynamic>> _profile(String uid) =>
+      _db.collection('users').doc(uid);
 
-  Map<String, dynamic> _users() =>
-      (_store.readJson(_usersKey) as Map<String, dynamic>?) ?? {};
+  /// The signed-in account's id, or null when signed out.
+  Stream<String?> authChanges() => _auth.authStateChanges().map((u) => u?.uid);
 
-  static String _key(String email) => email.trim().toLowerCase();
+  /// Live profile for [uid]. Until the profile document exists (just after
+  /// sign up) it falls back to what Firebase Auth knows.
+  Stream<AppUser> watchProfile(String uid) =>
+      _profile(uid).snapshots().map((snap) {
+        final data = snap.data();
+        if (data != null) return AppUser.fromJson(uid, data);
+        final email = _auth.currentUser?.email ?? '';
+        return AppUser(
+          uid: uid,
+          name: email.split('@').first,
+          email: email,
+          batch: '',
+        );
+      });
 
-  AppUser? currentUser() {
-    final email = _store.getString(_sessionKey);
-    if (email == null) return null;
-    final record = _users()[email] as Map<String, dynamic>?;
-    return record == null ? null : AppUser.fromJson(record);
-  }
-
-  Future<AppUser> signUp({
+  Future<void> signUp({
     required String name,
     required String email,
     required String batch,
     String? studentId,
     required String password,
-  }) async {
-    final key = _key(email);
-    final users = _users();
-    if (users.containsKey(key)) {
-      throw const AuthException(
-          'An account with this email already exists. Log in instead.');
-    }
-    final user = AppUser(
-      name: name.trim(),
-      email: key,
-      batch: batch.trim(),
-      studentId: (studentId == null || studentId.trim().isEmpty)
-          ? null
-          : studentId.trim(),
-    );
-    final salt = _newSalt();
-    users[key] = {
-      ...user.toJson(),
-      'salt': salt,
-      'hash': _hash(password, salt),
-    };
-    await _store.writeJson(_usersKey, users);
-    await _store.setString(_sessionKey, key);
-    return user;
-  }
+  }) =>
+      _guard(() async {
+        final cred = await _auth.createUserWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+        final uid = cred.user!.uid;
+        await _profile(uid).set(AppUser(
+          uid: uid,
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          batch: batch.trim(),
+          studentId: _clean(studentId),
+        ).toJson());
+      });
 
-  Future<AppUser> logIn({
-    required String email,
-    required String password,
-  }) async {
-    final key = _key(email);
-    final record = _users()[key] as Map<String, dynamic>?;
-    if (record == null ||
-        record['hash'] != _hash(password, record['salt'] as String)) {
-      throw const AuthException('That email and password don\'t match.');
-    }
-    await _store.setString(_sessionKey, key);
-    return AppUser.fromJson(record);
-  }
+  Future<void> logIn({required String email, required String password}) =>
+      _guard(() async {
+        await _auth.signInWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+      });
 
-  Future<void> logOut() => _store.remove(_sessionKey);
+  Future<void> logOut() => _auth.signOut();
 
-  /// Saves new profile details for the signed-in account. Email stays
-  /// the same because it identifies the account.
-  Future<AppUser> updateProfile({
+  Future<void> sendPasswordReset(String email) =>
+      _guard(() => _auth.sendPasswordResetEmail(email: email.trim()));
+
+  /// Saves new profile details. Email stays the same because it's the
+  /// login.
+  Future<void> updateProfile({
     required String name,
     required String batch,
     String? studentId,
-  }) async {
-    final key = _store.getString(_sessionKey);
-    final users = _users();
-    final record = users[key] as Map<String, dynamic>?;
-    if (key == null || record == null) {
-      throw const AuthException('You are signed out. Log in again.');
-    }
-    final user = AppUser(
-      name: name.trim(),
-      email: key,
-      batch: batch.trim(),
-      studentId: (studentId == null || studentId.trim().isEmpty)
-          ? null
-          : studentId.trim(),
-    );
-    users[key] = {
-      ...user.toJson(),
-      'salt': record['salt'],
-      'hash': record['hash'],
-    };
-    await _store.writeJson(_usersKey, users);
-    return user;
-  }
+  }) =>
+      _guard(() async {
+        final user = _signedIn();
+        await _profile(user.uid).set({
+          'name': name.trim(),
+          'email': user.email,
+          'batch': batch.trim(),
+          'studentId': _clean(studentId),
+        }, SetOptions(merge: true));
+      });
 
   Future<void> changePassword({
     required String current,
     required String next,
-  }) async {
-    final key = _store.getString(_sessionKey);
-    final users = _users();
-    final record = users[key] as Map<String, dynamic>?;
-    if (key == null || record == null) {
+  }) =>
+      _guard(() async {
+        final user = _signedIn();
+        // Firebase asks for a fresh login before a password change.
+        await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: user.email!, password: current),
+        );
+        await user.updatePassword(next);
+      });
+
+  User _signedIn() {
+    final user = _auth.currentUser;
+    if (user == null) {
       throw const AuthException('You are signed out. Log in again.');
     }
-    if (record['hash'] != _hash(current, record['salt'] as String)) {
-      throw const AuthException('Your current password is wrong.');
+    return user;
+  }
+
+  static String? _clean(String? value) =>
+      (value == null || value.trim().isEmpty) ? null : value.trim();
+
+  /// Runs [action], turning Firebase errors into plain messages.
+  static Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(messageFor(e.code));
+    } on FirebaseException catch (e) {
+      throw AuthException(e.code == 'unavailable'
+          ? 'No internet connection. Try again when you\'re online.'
+          : 'Something went wrong (${e.code}). Try again.');
     }
-    final salt = _newSalt();
-    users[key] = {...record, 'salt': salt, 'hash': _hash(next, salt)};
-    await _store.writeJson(_usersKey, users);
   }
 
-  static String _newSalt() {
-    final random = Random.secure();
-    return base64Url.encode(List.generate(16, (_) => random.nextInt(256)));
-  }
-
-  static String _hash(String password, String salt) =>
-      sha256.convert(utf8.encode('$salt:$password')).toString();
+  static String messageFor(String code) => switch (code) {
+        'email-already-in-use' =>
+          'An account with this email already exists. Log in instead.',
+        'invalid-email' => 'That doesn\'t look like an email.',
+        'weak-password' => 'Choose a stronger password.',
+        'invalid-credential' ||
+        'wrong-password' ||
+        'user-not-found' =>
+          'That email and password don\'t match.',
+        'user-disabled' => 'This account has been disabled.',
+        'too-many-requests' =>
+          'Too many tries. Wait a few minutes and try again.',
+        'network-request-failed' =>
+          'No internet connection. Try again when you\'re online.',
+        'requires-recent-login' => 'Log out and back in, then try again.',
+        _ => 'Something went wrong ($code). Try again.',
+      };
 }
